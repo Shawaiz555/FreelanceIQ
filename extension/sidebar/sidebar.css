@@ -1,0 +1,5 @@
+/* FreelanceIQ Sidebar — injected into host page via <link> in content_scripts */
+/* This file is intentionally minimal — all sidebar styles live in sidebar.html */
+#fiq-sidebar-frame {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
