@@ -1,16 +1,44 @@
 {
   "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": "frontend/dist",
+  "installCommand": "npm run install:all",
   "functions": {
     "backend/api/**/*.js": {
       "runtime": "nodejs20.x"
     }
   },
+  "rewrites": [
+    { "source": "/api/auth/register",        "destination": "/backend/api/auth/register.js" },
+    { "source": "/api/auth/login",            "destination": "/backend/api/auth/login.js" },
+    { "source": "/api/auth/refresh",          "destination": "/backend/api/auth/refresh.js" },
+    { "source": "/api/auth/forgot-password",  "destination": "/backend/api/auth/forgot-password.js" },
+    { "source": "/api/auth/reset-password",   "destination": "/backend/api/auth/reset-password.js" },
+
+    { "source": "/api/user/profile",          "destination": "/backend/api/user/profile.js" },
+
+    { "source": "/api/analysis/create",       "destination": "/backend/api/analysis/create.js" },
+    { "source": "/api/analysis/history",      "destination": "/backend/api/analysis/history.js" },
+    { "source": "/api/analysis/:id",          "destination": "/backend/api/analysis/[id].js" },
+
+    { "source": "/api/proposals/generate",    "destination": "/backend/api/proposals/generate.js" },
+
+    { "source": "/api/billing/webhook",       "destination": "/backend/api/billing/webhook.js" },
+    { "source": "/api/billing/plans",         "destination": "/backend/api/billing/plans.js" },
+    { "source": "/api/billing/checkout",      "destination": "/backend/api/billing/checkout.js" },
+    { "source": "/api/billing/portal",        "destination": "/backend/api/billing/portal.js" },
+
+    { "source": "/api/analytics/dashboard",   "destination": "/backend/api/analytics/dashboard.js" },
+
+    { "source": "/((?!api/).*)",              "destination": "/index.html" }
+  ],
   "headers": [
     {
       "source": "/api/(.*)",
       "headers": [
-        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, PATCH, DELETE, OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" },
+        { "key": "Access-Control-Allow-Origin",      "value": "*" },
+        { "key": "Access-Control-Allow-Methods",     "value": "GET, POST, PATCH, DELETE, OPTIONS" },
+        { "key": "Access-Control-Allow-Headers",     "value": "Content-Type, Authorization, X-Signature" },
         { "key": "Access-Control-Allow-Credentials", "value": "true" }
       ]
     }
