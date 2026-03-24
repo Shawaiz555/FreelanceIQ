@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { z } from 'zod';
@@ -30,14 +30,17 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { isAuthenticated, loading, error } = useSelector((state) => state.auth);
+  const justRegistered = useRef(false);
 
   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [fieldErrors, setFieldErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
+  // Only redirect to dashboard if already authenticated on mount (returning user).
+  // Skip redirect if we just registered — handleSubmit navigates to /onboarding instead.
   useEffect(() => {
-    if (isAuthenticated) navigate('/dashboard', { replace: true });
+    if (isAuthenticated && !justRegistered.current) navigate('/dashboard', { replace: true });
     return () => dispatch(clearError());
   }, [isAuthenticated, navigate, dispatch]);
 
@@ -62,6 +65,7 @@ export default function RegisterPage() {
     dispatch(setLoading(true));
     try {
       const res = await authApi.register(form);
+      justRegistered.current = true;
       dispatch(setCredentials({ user: res.data.user, token: res.data.token }));
       navigate('/onboarding', { replace: true });
     } catch (err) {

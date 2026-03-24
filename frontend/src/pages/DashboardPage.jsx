@@ -88,7 +88,7 @@ function QuickBidWidget() {
 
   return (
     <div
-      className="relative overflow-hidden rounded-2xl p-6 text-white"
+      className="relative overflow-hidden rounded-2xl p-6 py-8 text-white"
       style={{
         background: 'linear-gradient(135deg, #1e3a8a 0%, #312e81 50%, #1e1b4b 100%)',
       }}

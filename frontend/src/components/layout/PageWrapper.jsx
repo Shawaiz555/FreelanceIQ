@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import Sidebar from './Sidebar';
@@ -13,6 +13,16 @@ export default function PageWrapper({ title = '' }) {
   const dispatch = useDispatch();
   const { isAuthenticated, extensionAuthReady } = useSelector((state) => state.auth);
   const mobileMenuOpen = useSelector((state) => state.ui.mobileMenuOpen);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      // small tick so CSS transition fires after mount
+      requestAnimationFrame(() => setVisible(true));
+    } else {
+      setVisible(false);
+    }
+  }, [mobileMenuOpen]);
 
   // Wait for extension auth check before deciding to redirect
   useEffect(() => {
@@ -45,11 +55,13 @@ export default function PageWrapper({ title = '' }) {
       {mobileMenuOpen && (
         <>
           <div
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            className={`fixed inset-0 z-40 lg:hidden transition-opacity duration-300 ${visible ? 'bg-black/50 opacity-100' : 'opacity-0'}`}
             onClick={() => dispatch(setMobileMenu(false))}
             aria-hidden="true"
           />
-          <div className="fixed inset-y-0 left-0 w-64 z-50 lg:hidden">
+          <div
+            className={`fixed inset-y-0 left-0 w-72 z-50 lg:hidden transition-transform duration-300 ease-out ${visible ? 'translate-x-0' : '-translate-x-full'}`}
+          >
             <Sidebar mobile onClose={() => dispatch(setMobileMenu(false))} />
           </div>
         </>
