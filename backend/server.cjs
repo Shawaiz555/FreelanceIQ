@@ -10,37 +10,37 @@ const app = express();
 
 // Webhook route must use raw body parser BEFORE express.json() runs,
 // so the HMAC-SHA256 signature can be verified against the raw bytes.
-app.all('/api/billing/webhook', express.raw({ type: '*/*' }), require('./api/billing/webhook'));
+app.all('/api/billing/webhook', express.raw({ type: '*/*' }), require('../api/billing/webhook'));
 
 // Parse JSON bodies for all other routes
 app.use(express.json());
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
-app.all('/api/auth/register', require('./api/auth/register'));
-app.all('/api/auth/login', require('./api/auth/login'));
-app.all('/api/auth/refresh', require('./api/auth/refresh'));
-app.all('/api/auth/forgot-password', require('./api/auth/forgot-password'));
-app.all('/api/auth/reset-password', require('./api/auth/reset-password'));
+app.all('/api/auth/register', require('../api/auth/register'));
+app.all('/api/auth/login', require('../api/auth/login'));
+app.all('/api/auth/refresh', require('../api/auth/refresh'));
+app.all('/api/auth/forgot-password', require('../api/auth/forgot-password'));
+app.all('/api/auth/reset-password', require('../api/auth/reset-password'));
 
 // ─── User ─────────────────────────────────────────────────────────────────────
-app.all('/api/user/profile', require('./api/user/profile'));
+app.all('/api/user/profile', require('../api/user/profile'));
 
 // ─── Analysis ─────────────────────────────────────────────────────────────────
-app.all('/api/analysis/create', require('./api/analysis/create'));
-app.all('/api/analysis/history', require('./api/analysis/history'));
-app.all('/api/analysis/:id', require('./api/analysis/[id]'));
+app.all('/api/analysis/create', require('../api/analysis/create'));
+app.all('/api/analysis/history', require('../api/analysis/history'));
+app.all('/api/analysis/:id', require('../api/analysis/[id]'));
 
 // ─── Proposals ────────────────────────────────────────────────────────────────
-app.all('/api/proposals/generate', require('./api/proposals/generate'));
+app.all('/api/proposals/generate', require('../api/proposals/generate'));
 
 // ─── Billing ──────────────────────────────────────────────────────────────────
-app.all('/api/billing/plans', require('./api/billing/plans'));
-app.all('/api/billing/checkout', require('./api/billing/checkout'));
-app.all('/api/billing/portal', require('./api/billing/portal'));
+app.all('/api/billing/plans', require('../api/billing/plans'));
+app.all('/api/billing/checkout', require('../api/billing/checkout'));
+app.all('/api/billing/portal', require('../api/billing/portal'));
 // Note: /api/billing/webhook is registered above express.json() for raw body access
 
 // ─── Analytics ────────────────────────────────────────────────────────────────
-app.all('/api/analytics/dashboard', require('./api/analytics/dashboard'));
+app.all('/api/analytics/dashboard', require('../api/analytics/dashboard'));
 
 const http = require('http');
 const PORT = 3001;
