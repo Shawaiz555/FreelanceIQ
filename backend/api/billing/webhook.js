@@ -1,10 +1,13 @@
-const stripe = require('stripe');
+const crypto = require('crypto');
 const connectDB = require('../lib/db');
 const User = require('../lib/models/User');
 const { withErrorHandler } = require('../lib/withMiddleware');
 
-// Stripe requires the raw body for signature verification — do NOT parse JSON first
+// Reads raw body as Buffer.
+// If express.raw() was applied to this route, req.body is already a Buffer.
+// Otherwise falls back to reading the stream directly (Vercel serverless context).
 function getRawBody(req) {
+  if (Buffer.isBuffer(req.body)) return Promise.resolve(req.body);
   return new Promise((resolve, reject) => {
     const chunks = [];
     req.on('data', (chunk) => chunks.push(chunk));
@@ -13,10 +16,23 @@ function getRawBody(req) {
   });
 }
 
-// Maps Stripe price IDs back to our tier slugs
-function tierFromPriceId(priceId) {
-  if (priceId === process.env.STRIPE_PRICE_PRO) return 'pro';
-  if (priceId === process.env.STRIPE_PRICE_AGENCY) return 'agency';
+// Verifies the X-Signature header using HMAC-SHA256
+// LS sends the signature as a hex string — compare hex strings using timingSafeEqual
+function verifySignature(rawBody, signature, secret) {
+  const hmac = crypto.createHmac('sha256', secret);
+  hmac.update(rawBody);
+  const digest = hmac.digest('hex');
+  // Compare as UTF-8 buffers (both are hex strings of equal length)
+  const digestBuf = Buffer.from(digest, 'utf8');
+  const sigBuf = Buffer.from(signature, 'utf8');
+  if (digestBuf.length !== sigBuf.length) return false;
+  return crypto.timingSafeEqual(digestBuf, sigBuf);
+}
+
+// Maps LS variant IDs back to our tier slugs
+function tierFromVariantId(variantId) {
+  if (variantId === process.env.LEMONSQUEEZY_VARIANT_PRO) return 'pro';
+  if (variantId === process.env.LEMONSQUEEZY_VARIANT_AGENCY) return 'agency';
   return null;
 }
 
@@ -26,124 +42,141 @@ async function handler(req, res) {
     return;
   }
 
-  const sig = req.headers['stripe-signature'];
-  if (!sig) {
-    res.status(400).json({ success: false, error: 'Missing stripe-signature header' });
+  const signature = req.headers['x-signature'];
+  if (!signature) {
+    res.status(400).json({ success: false, error: 'Missing x-signature header' });
     return;
   }
 
-  if (!process.env.STRIPE_WEBHOOK_SECRET || !process.env.STRIPE_SECRET_KEY) {
-    res.status(500).json({ success: false, error: 'Stripe not configured' });
+  if (!process.env.LEMONSQUEEZY_WEBHOOK_SECRET) {
+    res.status(500).json({ success: false, error: 'Lemon Squeezy webhook secret not configured' });
     return;
   }
 
   const rawBody = await getRawBody(req);
 
+  let isValid;
+  try {
+    isValid = verifySignature(rawBody, signature, process.env.LEMONSQUEEZY_WEBHOOK_SECRET);
+  } catch (err) {
+    console.error('[Webhook] Signature verification error:', err.message);
+    res.status(400).json({ success: false, error: 'Signature verification failed' });
+    return;
+  }
+
+  if (!isValid) {
+    console.error('[Webhook] Invalid signature');
+    res.status(400).json({ success: false, error: 'Invalid signature' });
+    return;
+  }
+
   let event;
   try {
-    const stripeClient = stripe(process.env.STRIPE_SECRET_KEY);
-    event = stripeClient.webhooks.constructEvent(
-      rawBody,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
+    event = JSON.parse(rawBody.toString('utf8'));
   } catch (err) {
-    console.error('[Webhook] Signature verification failed:', err.message);
-    res.status(400).json({ success: false, error: `Webhook error: ${err.message}` });
+    res.status(400).json({ success: false, error: 'Invalid JSON payload' });
     return;
   }
 
   await connectDB();
 
+  const eventName = event.meta?.event_name;
+  const data = event.data?.attributes;
+  const customData = event.meta?.custom_data || {};
+
+  console.log(`[Webhook] Received event: ${eventName}`);
+
   try {
-    switch (event.type) {
-      // ── Subscription created / upgraded ─────────────────────────────────────
-      case 'checkout.session.completed': {
-        const session = event.data.object;
-        if (session.mode !== 'subscription') break;
+    switch (eventName) {
+      // ── New subscription created ─────────────────────────────────────────────
+      case 'subscription_created': {
+        const userId = customData.user_id;
+        if (!userId) {
+          console.warn('[Webhook] subscription_created missing user_id in custom_data');
+          break;
+        }
 
-        const userId = session.metadata?.userId;
-        if (!userId) break;
-
-        const stripeClient = stripe(process.env.STRIPE_SECRET_KEY);
-        const subscription = await stripeClient.subscriptions.retrieve(session.subscription);
-        const priceId = subscription.items.data[0]?.price?.id;
-        const tier = tierFromPriceId(priceId) || 'pro';
-        const periodEnd = new Date(subscription.current_period_end * 1000);
+        const variantId = String(data.variant_id);
+        const tier = tierFromVariantId(variantId) || 'pro';
+        const periodEnd = data.renews_at ? new Date(data.renews_at) : null;
 
         await User.findByIdAndUpdate(userId, {
           'subscription.tier': tier,
-          'subscription.stripe_customer_id': session.customer,
-          'subscription.stripe_subscription_id': session.subscription,
+          'subscription.ls_customer_id': String(data.customer_id),
+          'subscription.ls_subscription_id': String(event.data.id),
           'subscription.current_period_end': periodEnd,
           'subscription.status': 'active',
         });
 
-        console.log(`[Webhook] checkout.session.completed — user ${userId} → ${tier}`);
+        console.log(`[Webhook] subscription_created — user ${userId} → ${tier}`);
         break;
       }
 
       // ── Subscription renewed ─────────────────────────────────────────────────
-      case 'invoice.payment_succeeded': {
-        const invoice = event.data.object;
-        if (!invoice.subscription) break;
-
-        const stripeClient = stripe(process.env.STRIPE_SECRET_KEY);
-        const subscription = await stripeClient.subscriptions.retrieve(invoice.subscription);
-        const customerId = invoice.customer;
-        const periodEnd = new Date(subscription.current_period_end * 1000);
+      case 'subscription_payment_success': {
+        const subscriptionId = String(event.data.id);
+        const periodEnd = data.renews_at ? new Date(data.renews_at) : null;
 
         await User.findOneAndUpdate(
-          { 'subscription.stripe_customer_id': customerId },
+          { 'subscription.ls_subscription_id': subscriptionId },
           {
             'subscription.status': 'active',
             'subscription.current_period_end': periodEnd,
           }
         );
+
+        console.log(`[Webhook] subscription_payment_success — subscription ${subscriptionId}`);
         break;
       }
 
       // ── Payment failed ───────────────────────────────────────────────────────
-      case 'invoice.payment_failed': {
-        const invoice = event.data.object;
-        const customerId = invoice.customer;
+      case 'subscription_payment_failed': {
+        const subscriptionId = String(event.data.id);
 
         await User.findOneAndUpdate(
-          { 'subscription.stripe_customer_id': customerId },
+          { 'subscription.ls_subscription_id': subscriptionId },
           { 'subscription.status': 'past_due' }
         );
 
-        console.warn(`[Webhook] invoice.payment_failed — customer ${customerId}`);
+        console.warn(`[Webhook] subscription_payment_failed — subscription ${subscriptionId}`);
         break;
       }
 
       // ── Subscription cancelled ───────────────────────────────────────────────
-      case 'customer.subscription.deleted': {
-        const subscription = event.data.object;
-        const customerId = subscription.customer;
+      case 'subscription_cancelled': {
+        const subscriptionId = String(event.data.id);
 
         await User.findOneAndUpdate(
-          { 'subscription.stripe_customer_id': customerId },
+          { 'subscription.ls_subscription_id': subscriptionId },
           {
             'subscription.tier': 'free',
             'subscription.status': 'canceled',
-            'subscription.stripe_subscription_id': null,
+            'subscription.ls_subscription_id': null,
             'subscription.current_period_end': null,
           }
         );
 
-        console.log(`[Webhook] customer.subscription.deleted — customer ${customerId} → free`);
+        console.log(`[Webhook] subscription_cancelled — subscription ${subscriptionId} → free`);
         break;
       }
 
-      // ── Subscription updated (plan change via portal) ────────────────────────
-      case 'customer.subscription.updated': {
-        const subscription = event.data.object;
-        const customerId = subscription.customer;
-        const priceId = subscription.items.data[0]?.price?.id;
-        const tier = tierFromPriceId(priceId);
-        const status = subscription.status;
-        const periodEnd = new Date(subscription.current_period_end * 1000);
+      // ── Subscription updated (plan change) ───────────────────────────────────
+      case 'subscription_updated': {
+        const subscriptionId = String(event.data.id);
+        const variantId = String(data.variant_id);
+        const tier = tierFromVariantId(variantId);
+
+        const statusMap = {
+          active: 'active',
+          on_trial: 'trialing',
+          past_due: 'past_due',
+          unpaid: 'past_due',
+          paused: 'past_due',
+          cancelled: 'canceled',
+          expired: 'canceled',
+        };
+        const status = statusMap[data.status] || 'active';
+        const periodEnd = data.renews_at ? new Date(data.renews_at) : null;
 
         const update = {
           'subscription.status': status,
@@ -152,24 +185,25 @@ async function handler(req, res) {
         if (tier) update['subscription.tier'] = tier;
 
         await User.findOneAndUpdate(
-          { 'subscription.stripe_customer_id': customerId },
+          { 'subscription.ls_subscription_id': subscriptionId },
           update
         );
+
+        console.log(`[Webhook] subscription_updated — subscription ${subscriptionId}`);
         break;
       }
 
       default:
-        // Acknowledge but ignore unhandled events
+        console.log(`[Webhook] Unhandled event type: ${eventName}`);
         break;
     }
   } catch (err) {
-    console.error(`[Webhook] Handler error for ${event.type}:`, err);
-    // Still return 200 so Stripe doesn't retry indefinitely for non-critical events
+    console.error(`[Webhook] Handler error for ${eventName}:`, err);
+    // Still return 200 so Lemon Squeezy doesn't retry indefinitely for non-critical events
   }
 
   res.status(200).json({ received: true });
 }
 
-// Note: withErrorHandler adds CORS headers — Stripe doesn't need them,
-// but it won't hurt. We skip withAuth since this is called by Stripe, not a user.
+// withErrorHandler adds CORS headers. We skip withAuth since this is called by LS, not a user.
 module.exports = withErrorHandler(handler);

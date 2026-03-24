@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { SkeletonCard } from '../components/ui/Skeleton';
 import { addNotification, openModal } from '../store/slices/uiSlice';
-import { billingApi } from '../services/api';
+import { updateUser } from '../store/slices/authSlice';
+import { billingApi, userApi } from '../services/api';
 
 const CHECK_ICON = (
   <svg className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
@@ -224,6 +226,7 @@ const TIER_BADGE = {
 export default function BillingPage() {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
+  const location = useLocation();
   const [plans, setPlans] = useState([]);
   const [plansLoading, setPlansLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState('');
@@ -245,6 +248,31 @@ export default function BillingPage() {
       .catch(() => {})
       .finally(() => setPlansLoading(false));
   }, []);
+
+  // After returning from LS checkout (?success=1), re-fetch the user profile
+  // so the Redux store reflects the updated subscription tier from the webhook.
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('success') !== '1') return;
+
+    const poll = async () => {
+      for (let i = 0; i < 5; i++) {
+        await new Promise((r) => setTimeout(r, 2000));
+        try {
+          const res = await userApi.getProfile();
+          const freshUser = res.data;
+          dispatch(updateUser(freshUser));
+          if (freshUser?.subscription?.tier !== 'free') {
+            dispatch(addNotification({ type: 'success', message: 'Your plan has been upgraded!' }));
+            break;
+          }
+        } catch {
+          break;
+        }
+      }
+    };
+    poll();
+  }, [location.search, dispatch]);
 
   const handleUpgrade = async (planId) => {
     setCheckoutLoading(planId);
@@ -383,8 +411,8 @@ export default function BillingPage() {
         </svg>
         <p className="text-xs text-slate-500 leading-relaxed">
           Payments are processed securely by{' '}
-          <span className="font-semibold text-slate-700">Stripe</span>. Cancel or change your plan
-          anytime. For invoices or disputes, use the{' '}
+          <span className="font-semibold text-slate-700">Lemon Squeezy</span>. Cancel or change your
+          plan anytime. For invoices or billing history, use the{' '}
           <span className="font-semibold text-slate-700">Manage subscription</span> button on your
           current plan.
         </p>

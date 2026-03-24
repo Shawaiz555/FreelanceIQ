@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { closeModal, addNotification } from '../../store/slices/uiSlice';
-import { billingApi } from '../../services/mockApi';
+import { billingApi } from '../../services/api';
 
 const PRO_BENEFITS = [
   { icon: '∞', text: 'Unlimited bid analyses every month' },
@@ -50,15 +50,9 @@ export default function UpgradeModal() {
     setLoading(true);
     try {
       const res = await billingApi.createCheckout({ planId: 'pro' });
-      dispatch(addNotification({
-        type: 'info',
-        message: `Redirecting to Stripe checkout… (mock: ${res.data.url})`,
-        duration: 5000,
-      }));
-      handleClose();
+      window.location.href = res.data.url;
     } catch {
       dispatch(addNotification({ type: 'error', message: 'Could not start checkout. Please try again.' }));
-    } finally {
       setLoading(false);
     }
   };
@@ -123,7 +117,7 @@ export default function UpgradeModal() {
           <div className="mt-5 rounded-xl bg-blue-50 border border-blue-100 p-4 flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold text-gray-900">Pro plan</p>
-              <p className="text-xs text-gray-500 mt-0.5">Cancel anytime · Processed by Stripe</p>
+              <p className="text-xs text-gray-500 mt-0.5">Cancel anytime · Secure checkout</p>
             </div>
             <div className="text-right">
               <p className="text-2xl font-bold text-gray-900">$9</p>
@@ -150,7 +144,7 @@ export default function UpgradeModal() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             )}
-            {loading ? 'Redirecting…' : 'Upgrade to Pro — $9/mo'}
+            {loading ? 'Opening checkout…' : 'Upgrade to Pro — $9/mo'}
           </button>
           <button
             type="button"

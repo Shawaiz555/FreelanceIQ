@@ -8,7 +8,11 @@ require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') }
 const express = require('express');
 const app = express();
 
-// Parse JSON bodies (equivalent to what vercel dev does automatically)
+// Webhook route must use raw body parser BEFORE express.json() runs,
+// so the HMAC-SHA256 signature can be verified against the raw bytes.
+app.all('/api/billing/webhook', express.raw({ type: '*/*' }), require('./api/billing/webhook'));
+
+// Parse JSON bodies for all other routes
 app.use(express.json());
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
@@ -33,7 +37,7 @@ app.all('/api/proposals/generate', require('./api/proposals/generate'));
 app.all('/api/billing/plans', require('./api/billing/plans'));
 app.all('/api/billing/checkout', require('./api/billing/checkout'));
 app.all('/api/billing/portal', require('./api/billing/portal'));
-app.all('/api/billing/webhook', require('./api/billing/webhook'));
+// Note: /api/billing/webhook is registered above express.json() for raw body access
 
 // ─── Analytics ────────────────────────────────────────────────────────────────
 app.all('/api/analytics/dashboard', require('./api/analytics/dashboard'));

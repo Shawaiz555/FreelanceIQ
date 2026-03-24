@@ -31,8 +31,8 @@ const userSchema = new mongoose.Schema(
     },
     subscription: {
       tier: { type: String, enum: ['free', 'pro', 'agency'], default: 'free' },
-      stripe_customer_id: { type: String, default: null },
-      stripe_subscription_id: { type: String, default: null },
+      ls_customer_id: { type: String, default: null },
+      ls_subscription_id: { type: String, default: null },
       current_period_end: { type: Date, default: null },
       status: {
         type: String,
