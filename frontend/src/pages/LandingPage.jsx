@@ -639,29 +639,22 @@ function HeroSection() {
                     <ScoreGauge score={84} size={100} />
                   </div>
                   <div className="space-y-2.5">
-                    {[
-                      { label: 'Relevance', score: 92, color: 'bg-emerald-500' },
-                      { label: 'Clarity', score: 78, color: 'bg-blue-500' },
-                      { label: 'Rate fit', score: 71, color: 'bg-blue-500' },
-                      { label: 'CTA strength', score: 55, color: 'bg-amber-500' },
-                    ].map((item) => (
-                      <div key={item.label}>
-                        <div className="flex justify-between text-[10px] mb-1">
-                          <span className="text-slate-500">{item.label}</span>
-                          <span className="text-slate-300 font-bold">{item.score}</span>
-                        </div>
-                        <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full ${item.color} rounded-full`}
-                            style={{ width: `${item.score}%` }}
-                          />
-                        </div>
-                      </div>
-                    ))}
+                    <div className="flex items-center justify-between px-2.5 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                      <span className="text-[10px] text-slate-400">Win probability</span>
+                      <span className="text-[10px] font-bold text-emerald-400">High</span>
+                    </div>
+                    <div className="flex items-center justify-between px-2.5 py-2 rounded-lg bg-slate-800/60 border border-white/5">
+                      <span className="text-[10px] text-slate-400">Suggested bid range</span>
+                      <span className="text-[10px] font-bold text-white">$45 – $65 / hr</span>
+                    </div>
+                    <div className="flex items-center justify-between px-2.5 py-2 rounded-lg bg-slate-800/60 border border-white/5">
+                      <span className="text-[10px] text-slate-400">Market median</span>
+                      <span className="text-[10px] font-bold text-slate-300">$52 / hr</span>
+                    </div>
                   </div>
-                  <div className="mt-4 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/15">
-                    <p className="text-[10px] text-amber-300 leading-relaxed">
-                      💡 Your CTA is weak — end with a direct question to boost replies by ~23%
+                  <div className="mt-3 p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/15">
+                    <p className="text-[10px] text-slate-300 leading-relaxed">
+                      Strong match for this job. Your rate is competitive — add a specific deliverable to strengthen your CTA.
                     </p>
                   </div>
                 </div>
@@ -820,7 +813,7 @@ function HowItWorksSection() {
     {
       num: '03',
       title: 'Fix It & Win',
-      desc: "Get a clear breakdown of what's weak — relevance, rate, clarity, CTA — with specific rewrites you can apply to your proposal instantly before sending.",
+      desc: "Get a plain-English explanation of your score, a suggested bid range based on real market data, and win probability — then use the AI rewriter to strengthen your proposal before sending.",
       icon: (
         <svg
           className="w-6 h-6"
@@ -949,7 +942,7 @@ function FeaturesSection() {
     {
       title: 'Score Breakdown',
       tag: 'Analytics',
-      desc: 'See exactly which parts of your proposal are strong or weak: job relevance, opening hook, rate justification, CTA, and more — all scored individually.',
+      desc: 'Paste your proposal and get an instant 0–100 bid score, a plain-English explanation of your result, a suggested bid range, and win probability — all in seconds.',
       gradient: 'from-amber-500 to-orange-600',
       icon: (
         <svg
@@ -989,8 +982,8 @@ function FeaturesSection() {
       ),
     },
     {
-      title: 'Win Rate Prediction',
-      tag: 'ML Powered',
+      title: 'Win Probability',
+      tag: 'AI Powered',
       desc: 'Based on your score and market conditions, FreelanceIQ estimates the likelihood a client will respond to your proposal — so you can decide when to bid.',
       gradient: 'from-pink-500 to-rose-600',
       icon: (
@@ -1068,27 +1061,25 @@ function DemoSection() {
               See exactly what your score means — and how to improve it
             </h2>
             <p className="text-slate-500 text-base leading-relaxed mb-8">
-              After you paste a proposal, FreelanceIQ breaks it down across multiple quality
-              dimensions. Each dimension gets an individual score, and you get specific, actionable
-              feedback — not vague advice.
+              After you click Analyze, FreelanceIQ gives you an overall 0–100 bid score, a plain-English explanation of why you got that score, a suggested bid range based on real Upwork market data, and a win probability — so you know exactly where you stand before you send.
             </p>
             <ul className="space-y-4">
               {[
                 {
-                  title: 'Relevance score',
-                  desc: 'How well does your proposal address the specific job post?',
+                  title: 'Bid score (0–100)',
+                  desc: 'Overall attractiveness of this job for your profile — higher means better fit and fairer terms.',
                 },
                 {
-                  title: 'Rate positioning',
-                  desc: 'Is your bid competitive for this skill on Upwork?',
+                  title: 'Score reasoning',
+                  desc: 'A plain-English explanation of what drove the score and what to watch out for.',
                 },
                 {
-                  title: 'Proposal clarity',
-                  desc: 'Is your writing clear, concise, and easy to read?',
+                  title: 'Suggested bid range',
+                  desc: 'Minimum and maximum bid in USD, calibrated to Upwork market rates for this skill.',
                 },
                 {
-                  title: 'CTA effectiveness',
-                  desc: 'Does your proposal end with a strong invite to reply?',
+                  title: 'Win probability',
+                  desc: 'Low, Medium, or High — how likely you are to win if you bid in the suggested range.',
                 },
               ].map((item, idx) => (
                 <li
@@ -1157,10 +1148,10 @@ function DemoSection() {
                         Quick summary
                       </p>
                       {[
-                        { label: 'Strong opening hook', positive: true },
-                        { label: 'Relevant to buyer request', positive: true },
+                        { label: 'Good fit for this job category', positive: true },
+                        { label: 'Client has strong hire history', positive: true },
                         { label: 'Rate slightly above Upwork median', positive: false },
-                        { label: 'Weak closing — no clear CTA', positive: false },
+                        { label: 'Red flag: vague project timeline', positive: false },
                       ].map((item) => (
                         <div
                           key={item.label}
@@ -1175,27 +1166,31 @@ function DemoSection() {
                 )}
 
                 {activeTab === 'breakdown' && (
-                  <div className="space-y-4">
-                    {[
-                      { label: 'Relevance to job post', score: 88, color: 'bg-emerald-500' },
-                      { label: 'Proposal clarity', score: 74, color: 'bg-blue-500' },
-                      { label: 'Rate positioning', score: 61, color: 'bg-amber-500' },
-                      { label: 'Opening hook', score: 82, color: 'bg-emerald-500' },
-                      { label: 'Call to action', score: 48, color: 'bg-red-500' },
-                    ].map((item) => (
-                      <div key={item.label}>
-                        <div className="flex justify-between text-xs mb-1.5">
-                          <span className="text-slate-400">{item.label}</span>
-                          <span className="text-white font-semibold">{item.score}</span>
-                        </div>
-                        <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full ${item.color} rounded-full`}
-                            style={{ width: `${item.score}%` }}
-                          />
-                        </div>
+                  <div className="space-y-3">
+                    <div className="p-3 rounded-xl bg-slate-800/60 border border-white/5">
+                      <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-1">Score reasoning</p>
+                      <p className="text-xs text-slate-300 leading-relaxed">
+                        Good overall fit. Client has a clear scope and solid hire history. Your rate is slightly above the Upwork median for React dashboards — consider tightening the range to increase win probability.
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="p-3 rounded-xl bg-slate-800/60 border border-white/5">
+                        <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-1">Bid range</p>
+                        <p className="text-sm font-bold text-white">$45 – $65<span className="text-[10px] text-slate-400 font-normal"> / hr</span></p>
                       </div>
-                    ))}
+                      <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                        <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-1">Win probability</p>
+                        <p className="text-sm font-bold text-emerald-400">High</p>
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-xl bg-slate-800/60 border border-white/5">
+                      <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-1.5">Red flags</p>
+                      <p className="text-xs text-red-300">Budget slightly low for senior-level work</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-slate-800/60 border border-white/5">
+                      <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-1.5">Green flags</p>
+                      <p className="text-xs text-emerald-300">Clear scope · Experienced client · Good hire history</p>
+                    </div>
                   </div>
                 )}
 
@@ -1203,7 +1198,7 @@ function DemoSection() {
                   <div className="space-y-3">
                     {[
                       {
-                        action: 'Rewrite your closing paragraph with a direct question',
+                        action: 'Use the AI rewriter to generate a stronger cover letter for this job',
                         impact: 'High',
                         color: 'text-red-400 bg-red-500/10',
                       },
@@ -1213,12 +1208,12 @@ function DemoSection() {
                         color: 'text-amber-400 bg-amber-500/10',
                       },
                       {
-                        action: 'Add one specific deliverable to your proposal',
+                        action: 'Add a specific deliverable or timeline to your proposal',
                         impact: 'Medium',
                         color: 'text-amber-400 bg-amber-500/10',
                       },
                       {
-                        action: 'Your opening is strong — keep it',
+                        action: 'High win probability — bid soon before competition increases',
                         impact: 'Positive',
                         color: 'text-emerald-400 bg-emerald-500/10',
                       },
@@ -1260,11 +1255,11 @@ function PricingSection() {
       popular: false,
       features: [
         { text: '5 proposal scores per month', available: true },
-        { text: 'Score breakdown (all dimensions)', available: true },
+        { text: 'Bid score + reasoning + bid range', available: true },
         { text: 'Upwork rate benchmarking', available: true },
         { text: 'Bid history (last 5)', available: true },
         { text: 'Proposal rewriter', available: false },
-        { text: 'Win rate prediction', available: false },
+        { text: 'Win probability', available: false },
         { text: 'Priority support', available: false },
       ],
     },
@@ -1277,29 +1272,29 @@ function PricingSection() {
       popular: true,
       features: [
         { text: 'Unlimited proposal scores', available: true },
-        { text: 'Score breakdown (all dimensions)', available: true },
+        { text: 'Bid score + reasoning + bid range', available: true },
         { text: 'Upwork rate benchmarking', available: true },
         { text: 'Full bid history', available: true },
         { text: 'AI proposal rewriter', available: true },
-        { text: 'Win rate prediction', available: true },
+        { text: 'Win probability', available: true },
         { text: 'Priority support', available: false },
       ],
     },
     {
       name: 'Agency',
       price: { monthly: 29, annual: 23 },
-      desc: 'For freelance teams and agencies managing multiple profiles.',
-      cta: 'Contact Sales',
+      desc: 'For power freelancers running a high volume of bids every month.',
+      cta: 'Start Agency',
       ctaVariant: 'secondary',
       popular: false,
       features: [
         { text: 'Everything in Pro', available: true },
-        { text: 'Up to 5 team seats', available: true },
-        { text: 'Team-level analytics dashboard', available: true },
-        { text: 'API access', available: true },
-        { text: 'Custom integrations', available: true },
-        { text: 'Win rate prediction', available: true },
-        { text: 'Dedicated account support', available: true },
+        { text: '500 analyses per month', available: true },
+        { text: 'AI proposal rewriter', available: true },
+        { text: 'Win probability per bid', available: true },
+        { text: 'Full bid history', available: true },
+        { text: 'Upwork rate benchmarking', available: true },
+        { text: 'Priority support', available: true },
       ],
     },
   ];
@@ -1519,7 +1514,7 @@ function FAQSection() {
     },
     {
       q: 'How does the AI score my proposal?',
-      a: "FreelanceIQ's AI reads your proposal alongside the job description and evaluates it across several dimensions: relevance to the job, clarity, rate positioning against Upwork market data, opening strength, and call-to-action quality. For LinkedIn jobs, it matches your uploaded CV against the role's requirements and produces a match score, skill gaps, and a ready-to-use application summary.",
+      a: "FreelanceIQ's AI reads your proposal alongside the job description and produces an overall 0–100 bid score, a plain-English explanation of what drove it, a suggested bid range calibrated to real Upwork market data for that skill, and a Low/Medium/High win probability. For LinkedIn jobs, it matches your uploaded CV against the role's requirements and produces a match score, skill gaps, strengths, and a ready-to-use application summary.",
     },
     {
       q: 'Will the rewriter change my writing style?',
@@ -1527,7 +1522,7 @@ function FAQSection() {
     },
     {
       q: 'Is there a free plan?',
-      a: 'Yes. The free plan lets you score 5 proposals per month with full score breakdowns and rate benchmarking — no credit card required. You can upgrade to Pro any time to get unlimited scores and the proposal rewriter.',
+      a: 'Yes. The free plan lets you score 5 proposals per month — you get the full bid score, score reasoning, bid range, win probability, and rate benchmarking — no credit card required. You can upgrade to Pro any time to get unlimited scores and the AI proposal rewriter.',
     },
     {
       q: 'How is FreelanceIQ different from just asking ChatGPT?',

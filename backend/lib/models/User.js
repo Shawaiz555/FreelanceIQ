@@ -23,14 +23,21 @@ const userSchema = new mongoose.Schema(
     profile: {
       title: { type: String, default: '' },
       skills: { type: [String], default: [] },
-      hourly_rate_usd: { type: Number, default: 0, min: 0 },
       experience_years: { type: Number, default: 0, min: 0 },
       upwork_url: { type: String, default: '' },
-      bio: { type: String, default: '', maxlength: 500 },
-      // CV parsed text — used for LinkedIn job matching
+      bio: { type: String, default: '', maxlength: 2000 },
+      // CV parsed text — used for LinkedIn job matching and profile extraction
       cv_text: { type: String, default: '', maxlength: 20000 },
       cv_filename: { type: String, default: '' },
       cv_uploaded_at: { type: Date, default: null },
+      // Extended professional profile fields (populated from CV extraction)
+      location: { type: String, default: '' },
+      linkedin_url: { type: String, default: '' },
+      github_url: { type: String, default: '' },
+      website_url: { type: String, default: '' },
+      languages: { type: [String], default: [] },
+      education: { type: [String], default: [] },
+      certifications: { type: [String], default: [] },
     },
     subscription: {
       tier: { type: String, enum: ['free', 'pro', 'agency'], default: 'free' },

@@ -34,7 +34,17 @@ async function handler(req, res) {
     }
 
     if (body.profile && typeof body.profile === 'object') {
-      const allowed = ['title', 'skills', 'hourly_rate_usd', 'experience_years', 'upwork_url', 'bio'];
+      // Validate array fields before assignment
+      for (const arrayField of ['skills', 'languages', 'education', 'certifications']) {
+        if (body.profile[arrayField] !== undefined && !Array.isArray(body.profile[arrayField])) {
+          throw new AppError(`${arrayField} must be an array`, 400);
+        }
+      }
+      const allowed = [
+        'title', 'skills', 'experience_years', 'upwork_url', 'bio',
+        'location', 'linkedin_url', 'github_url', 'website_url',
+        'languages', 'education', 'certifications',
+      ];
       for (const key of allowed) {
         if (body.profile[key] !== undefined) {
           req.user.profile[key] = body.profile[key];

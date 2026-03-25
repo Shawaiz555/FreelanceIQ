@@ -272,4 +272,66 @@ ${cvSection}`,
   return chatJSON(messages, MatchSchema);
 }
 
-module.exports = { classifyJob, scoreBid, generateProposal, matchJobToProfile };
+// ─── extractProfileFromCV ─────────────────────────────────────────────────────
+//
+// Parses a CV/resume text and extracts structured profile fields.
+// Used during CV upload to auto-populate the user's profile.
+
+const CVProfileSchema = z.object({
+  name:             z.string().nullable().optional().default(''),
+  title:            z.string().nullable().optional().default(''),
+  bio:              z.string().nullable().optional().default(''),
+  skills:           z.array(z.string()).nullable().optional().default([]),
+  experience_years: z.number().min(0).max(60).nullable().optional().default(0),
+  location:         z.string().nullable().optional().default(''),
+  linkedin_url:     z.string().nullable().optional().default(''),
+  github_url:       z.string().nullable().optional().default(''),
+  website_url:      z.string().nullable().optional().default(''),
+  languages:        z.array(z.string()).nullable().optional().default([]),
+  education:        z.array(z.string()).nullable().optional().default([]),
+  certifications:   z.array(z.string()).nullable().optional().default([]),
+}).transform((val) => ({
+  name:             val.name             ?? '',
+  title:            val.title            ?? '',
+  bio:              val.bio              ?? '',
+  skills:           val.skills           ?? [],
+  experience_years: val.experience_years ?? 0,
+  location:         val.location         ?? '',
+  linkedin_url:     val.linkedin_url     ?? '',
+  github_url:       val.github_url       ?? '',
+  website_url:      val.website_url      ?? '',
+  languages:        val.languages        ?? [],
+  education:        val.education        ?? [],
+  certifications:   val.certifications   ?? [],
+}));
+
+async function extractProfileFromCV(cvText) {
+  const messages = [
+    {
+      role: 'system',
+      content: `You are a professional CV parser. Extract structured profile data from the resume text and return a JSON object with these fields:
+- name: full name of the candidate
+- title: professional headline (e.g. "Senior Full Stack Developer")
+- bio: 2-4 sentence professional summary
+- skills: array of technical and professional skills (max 15)
+- experience_years: total years of professional experience as an integer (infer from dates or explicit statements)
+- location: city and/or country if found
+- linkedin_url: full LinkedIn URL only if found verbatim in the text
+- github_url: full GitHub URL only if found verbatim in the text
+- website_url: portfolio or personal website URL only if found verbatim
+- languages: spoken/written human languages (not programming languages), e.g. ["English", "Arabic"]
+- education: array of strings, each formatted as "Degree, Institution, Year" (e.g. "BSc Computer Science, Cairo University, 2019")
+- certifications: array of certification names (e.g. "AWS Solutions Architect Associate")
+
+Be conservative — omit a field rather than guess. Do not hallucinate URLs or credentials.`,
+    },
+    {
+      role: 'user',
+      content: `Extract profile data from this CV:\n\n${cvText.slice(0, 8000)}`,
+    },
+  ];
+
+  return chatJSON(messages, CVProfileSchema);
+}
+
+module.exports = { classifyJob, scoreBid, generateProposal, matchJobToProfile, extractProfileFromCV };
