@@ -113,7 +113,7 @@ function QuickBidWidget() {
           </span>
         </div>
         <p className="text-blue-200 text-xs mb-4 leading-relaxed">
-          Paste any Upwork, Fiverr, or Freelancer job URL for an instant AI bid score.
+          Paste any Upwork job URL for an instant AI bid score, or browse LinkedIn to match jobs to your CV.
         </p>
         <div className="flex gap-2">
           <input

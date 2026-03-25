@@ -1,7 +1,7 @@
 /**
  * FreelanceIQ — Content Script
  *
- * Injected into Upwork, Fiverr, and Freelancer job pages.
+ * Injected into Upwork and LinkedIn job pages.
  * Detects the job page, extracts job data, injects the sidebar iframe.
  *
  * NOTE: Content scripts do NOT support ES module imports in MV3.
@@ -276,122 +276,198 @@ function extractUpworkJob() {
   };
 }
 
-// ─── Fiverr extractor ─────────────────────────────────────────────────────────
+// ─── LinkedIn extractor ───────────────────────────────────────────────────────
 
-function isFiverrJobPage() {
-  const { href } = window.location;
+/**
+ * Returns the best available job detail container on any LinkedIn page.
+ * LinkedIn renders jobs in: dedicated /jobs/view/ pages, right-hand detail
+ * panels on /jobs/search/, AND embedded feed cards on the home/company pages.
+ * We check all known container patterns, returning the first visible one.
+ */
+function _linkedInJobContainer() {
+  var selectors = [
+    // Dedicated /jobs/view/ page
+    '.job-view-layout',
+    // Jobs search / collections right-panel detail pane
+    '.jobs-search__job-details--wrapper',
+    '.jobs-details__main-content',
+    '.jobs-details',
+    // Collections / recommended layout
+    '.scaffold-layout__detail',
+    // Feed/company page promoted job card top card
+    '.job-details-jobs-unified-top-card',
+    // Generic jobs detail sections
+    '[data-view-name="job-details"]',
+    '.jobs-unified-top-card',
+  ];
+  for (var i = 0; i < selectors.length; i++) {
+    var el = document.querySelector(selectors[i]);
+    if (el && el.offsetParent !== null) return el;
+  }
+  return null;
+}
+
+function isLinkedInJobPage() {
+  var href = window.location.href;
+  if (!href.includes('linkedin.com')) return false;
+  var pathname = window.location.pathname;
+  // Sidebar only makes sense on /jobs/* paths or when a job detail panel is visible
   return (
-    href.includes('fiverr.com') &&
-    (href.includes('/find_work') || href.includes('/buyer_orders') || href.includes('/request/'))
+    pathname.startsWith('/jobs/') ||
+    _linkedInJobContainer() !== null
   );
 }
 
-function extractFiverrJob() {
-  const url = window.location.href;
+function extractLinkedInJob() {
+  var url = window.location.href;
 
-  const title = _textAll([
-    'h1.request-title',
-    'h1[class*="title"]',
-    '[data-testid="request-title"]',
-    '.buyer-request h1',
-    '.request-card h2',
-    'h1',
-  ]);
+  // Scope all queries to the job detail container to avoid grabbing
+  // nav/notification elements (e.g. "0 notifications" h1).
+  var root = _linkedInJobContainer() || document;
 
-  const descEl = document.querySelector([
-    '.request-description',
-    '[data-testid="request-description"]',
-    '[class*="Description"] p',
-    '.buyer-request-description',
-    '.request-body p',
-  ].join(', '));
+  // ── Title ──────────────────────────────────────────────────────────────────
+  // Try scoped selectors first — NEVER fall back to bare `document h1`.
+  var titleSelectors = [
+    '.job-details-jobs-unified-top-card__job-title h1',
+    '.jobs-unified-top-card__job-title h1',
+    '.jobs-unified-top-card__job-title',
+    '[data-test-job-title]',
+    'h1.jobs-unified-top-card__title',
+    '.job-details-jobs-unified-top-card__job-title',
+    'h1.t-24',
+    '.t-24.t-bold.inline',
+  ];
 
-  const description = descEl ? descEl.innerText.trim() : '';
+  var title = '';
+  for (var ti = 0; ti < titleSelectors.length; ti++) {
+    var titleEl = root.querySelector(titleSelectors[ti]);
+    if (titleEl) {
+      var t = titleEl.textContent.trim();
+      // Reject nav artifacts — short strings or pure numbers
+      if (t.length > 3 && !/^\d+$/.test(t)) { title = t; break; }
+    }
+  }
+  // Last resort: find the first visible h1 on the page that isn't a nav artifact
+  if (!title) {
+    var h1Els = document.querySelectorAll('h1');
+    for (var hi = 0; hi < h1Els.length; hi++) {
+      var h1t = h1Els[hi].textContent.trim();
+      if (h1t.length > 3 && !/^\d+$/.test(h1t) && h1Els[hi].offsetParent !== null) {
+        // Skip elements inside nav/header
+        if (!h1Els[hi].closest('nav, header')) { title = h1t; break; }
+      }
+    }
+  }
 
-  const budgetRaw = _textAll([
-    '[data-testid="budget"]',
-    '.request-budget',
-    '[class*="Budget"]',
-    '.budget-amount',
-    'span[class*="budget"]',
-  ]);
-  const budget = _extractBudget(budgetRaw);
+  // ── Company ────────────────────────────────────────────────────────────────
+  var companyEl =
+    root.querySelector('.job-details-jobs-unified-top-card__company-name a') ||
+    root.querySelector('.jobs-unified-top-card__company-name a') ||
+    root.querySelector('[data-test-employer-name]') ||
+    root.querySelector('.jobs-unified-top-card__subtitle-primary-grouping a') ||
+    root.querySelector('.job-details-jobs-unified-top-card__company-name') ||
+    root.querySelector('.jobs-unified-top-card__company-name');
 
-  const skillEls = document.querySelectorAll([
-    '.request-tags span',
-    '[data-testid="tag"]',
-    '[class*="Tag"] span',
-    '.skills-tag',
-  ].join(', '));
+  var company = companyEl ? companyEl.textContent.trim() : '';
 
-  const skills = [...skillEls]
-    .map((el) => el.textContent.trim())
-    .filter(Boolean)
+  // ── Location ───────────────────────────────────────────────────────────────
+  var locationEl =
+    root.querySelector('.job-details-jobs-unified-top-card__bullet') ||
+    root.querySelector('.jobs-unified-top-card__bullet') ||
+    root.querySelector('[data-test-job-location]') ||
+    root.querySelector('.jobs-unified-top-card__subtitle-primary-grouping .t-black--light');
+
+  var location = locationEl ? locationEl.textContent.trim() : '';
+
+  // ── Workplace type (Remote / Hybrid / On-site) ────────────────────────────
+  var workplaceEl =
+    root.querySelector('.job-details-jobs-unified-top-card__workplace-type') ||
+    root.querySelector('.jobs-unified-top-card__workplace-type') ||
+    root.querySelector('.jobs-unified-top-card__workplace-type-badge');
+
+  var workplace_type = workplaceEl ? workplaceEl.textContent.trim() : '';
+
+  // ── Description ────────────────────────────────────────────────────────────
+  // LinkedIn renders the job body inside .show-more-less-html__markup (most reliable,
+  // works across /jobs/view/, /jobs/search/, /jobs/collections/ layouts).
+  // We try document-wide for these since root may be a narrow container that doesn't
+  // include the description pane.
+  var descSelectors = [
+    '.show-more-less-html__markup',            // Primary — works on all layouts
+    '#job-details',                             // Dedicated /jobs/view/ page
+    '.jobs-description__content .jobs-box__html-content',
+    '.jobs-description-content__text',
+    '.jobs-description__content',
+    '.jobs-description',
+    '.job-details-about-the-job-module__description',
+    '[data-test-job-description]',
+    '.jobs-box__html-content',
+  ];
+
+  var descEl = null;
+  // Always try document-wide first for description — the pane is often outside `root`
+  for (var di = 0; di < descSelectors.length; di++) {
+    var candidate = document.querySelector(descSelectors[di]);
+    if (candidate && (candidate.innerText || candidate.textContent || '').trim().length > 50) {
+      descEl = candidate;
+      break;
+    }
+  }
+  // If root is scoped, also try within root as fallback
+  if (!descEl && root !== document) {
+    for (var di2 = 0; di2 < descSelectors.length; di2++) {
+      var candidate2 = root.querySelector(descSelectors[di2]);
+      if (candidate2) { descEl = candidate2; break; }
+    }
+  }
+
+  var description = descEl ? (descEl.innerText || descEl.textContent || '').trim() : '';
+  // Strip leading "About the job" heading that LinkedIn includes in some containers
+  description = description.replace(/^about\s+the\s+job[\s\n]*/i, '').trim();
+
+  // ── Skills ─────────────────────────────────────────────────────────────────
+  var skillEls = root.querySelectorAll(
+    '.job-details-skill-match-status-list__skill-name, ' +
+    '.jobs-ppc-criteria__skill, ' +
+    '[data-test-skill-name], ' +
+    '.job-details-how-you-match__skills-item-subtitle'
+  );
+
+  var skills = [].slice.call(skillEls)
+    .map(function (el) { return el.textContent.trim(); })
+    .filter(function (t) { return t.length > 0 && t.length < 60; })
     .slice(0, 10);
 
-  return {
-    platform: 'fiverr',
-    url,
-    title: title || 'Fiverr Request',
-    description: description || 'No description found.',
-    budget_min: budget.min,
-    budget_max: budget.max || budget.min,
-    skills_required: skills,
-    client_hires: 0,
-  };
-}
+  // ── Seniority / employment type ────────────────────────────────────────────
+  var seniority_level = '';
+  var employment_type = '';
 
-// ─── Freelancer extractor ─────────────────────────────────────────────────────
+  var criteriaItems = root.querySelectorAll(
+    '.description__job-criteria-item, ' +
+    '.job-details-jobs-unified-top-card__job-insight'
+  );
 
-function isFreelancerJobPage() {
-  const { href } = window.location;
-  return href.includes('freelancer.com') && href.includes('/projects/');
-}
-
-function extractFreelancerJob() {
-  const url = window.location.href;
-
-  const title = _textAll([
-    'h1.PageProjectViewLogout-title',
-    'h1[class*="project-title"]',
-    '[class*="ProjectTitle"]',
-    'h1',
-  ]);
-
-  const descEl = document.querySelector([
-    '.PageProjectViewLogout-description',
-    '[class*="ProjectDescription"]',
-    '.project-description p',
-    '.description-text',
-  ].join(', '));
-
-  const description = descEl ? descEl.innerText.trim() : '';
-
-  const budgetRaw = _textAll([
-    '[class*="Budget"] .value',
-    '.project-budget strong',
-    '[class*="budget-value"]',
-  ]);
-  const budget = _extractBudget(budgetRaw);
-
-  const skillEls = document.querySelectorAll([
-    '.project-skills a',
-    '[class*="Skill"] a',
-    '[class*="skill-tag"]',
-  ].join(', '));
-
-  const skills = [...skillEls]
-    .map((el) => el.textContent.trim())
-    .filter(Boolean)
-    .slice(0, 10);
+  [].forEach.call(criteriaItems, function (item) {
+    var labelEl = item.querySelector('h3') || item.querySelector('[class*="label"]');
+    var label = labelEl ? labelEl.textContent : '';
+    var value = item.textContent || '';
+    var lowerLabel = label.toLowerCase();
+    if (lowerLabel.indexOf('seniority') !== -1) seniority_level = value.trim();
+    if (lowerLabel.indexOf('employment') !== -1) employment_type = value.trim();
+  });
 
   return {
-    platform: 'freelancer',
-    url,
-    title: title || 'Freelancer Project',
+    platform: 'linkedin',
+    url: url,
+    title: title || 'LinkedIn Job',
+    company: company,
+    location: location,
+    workplace_type: workplace_type,
+    seniority_level: seniority_level,
+    employment_type: employment_type,
     description: description || 'No description found.',
-    budget_min: budget.min,
-    budget_max: budget.max || budget.min,
+    budget_min: 0,
+    budget_max: 0,
     skills_required: skills,
     client_hires: 0,
   };
@@ -408,8 +484,7 @@ var currentUrl = location.href;
 
 function detectAndExtract() {
   if (isUpworkJobPage()) return extractUpworkJob();
-  if (isFiverrJobPage()) return extractFiverrJob();
-  if (isFreelancerJobPage()) return extractFreelancerJob();
+  if (isLinkedInJobPage()) return extractLinkedInJob();
   return null;
 }
 
@@ -487,6 +562,76 @@ window.fiqDebug = function () {
   console.groupEnd();
 };
 
+/**
+ * LinkedIn debug — call window.fiqLinkedInDebug() from DevTools on any LinkedIn page.
+ * Logs every candidate container and selector so we can tune the extractor.
+ */
+window.fiqLinkedInDebug = function () {
+  console.group('[FreelanceIQ] LinkedIn DOM debug — ' + window.location.href);
+
+  // Container candidates
+  var containerSelectors = [
+    '.job-view-layout',
+    '.jobs-search__job-details--wrapper',
+    '.jobs-details',
+    '.job-details-jobs-unified-top-card',
+    '.scaffold-layout__detail',
+    '[data-job-id]',
+  ];
+  containerSelectors.forEach(function (sel) {
+    var el = document.querySelector(sel);
+    console.log('container "' + sel + '":', el ? 'FOUND visible=' + (el.offsetParent !== null) + ' snippet=' + JSON.stringify(el.innerText.trim().slice(0, 60)) : 'NOT FOUND');
+  });
+
+  var root = _linkedInJobContainer() || document;
+  console.log('_linkedInJobContainer():', root === document ? 'document (no container found)' : root.className.slice(0, 60));
+
+  // All h1 elements
+  document.querySelectorAll('h1').forEach(function (el, i) {
+    console.log('h1[' + i + ']:', JSON.stringify(el.textContent.trim().slice(0, 80)),
+      '| class:', el.className.slice(0, 50),
+      '| visible:', el.offsetParent !== null,
+      '| inside root:', root.contains(el));
+  });
+
+  // Title selectors
+  var titleSelectors = [
+    '.job-details-jobs-unified-top-card__job-title h1',
+    '.jobs-unified-top-card__job-title h1',
+    '.jobs-unified-top-card__job-title',
+    '[data-test-job-title]',
+    'h1.jobs-unified-top-card__title',
+    '.job-details-jobs-unified-top-card__job-title',
+    'h1.t-24',
+    '.t-24.t-bold.inline',
+  ];
+  titleSelectors.forEach(function (sel) {
+    var el = root.querySelector(sel);
+    console.log('title "' + sel + '":', el ? JSON.stringify(el.textContent.trim().slice(0, 80)) : 'not found');
+  });
+
+  // Description selectors (checked document-wide)
+  var descSelectors = [
+    '.show-more-less-html__markup',
+    '#job-details',
+    '.jobs-description__content .jobs-box__html-content',
+    '.jobs-description-content__text',
+    '.jobs-description__content',
+    '.jobs-description',
+    '.job-details-about-the-job-module__description',
+    '[data-test-job-description]',
+    '.jobs-box__html-content',
+  ];
+  descSelectors.forEach(function (sel) {
+    var el = document.querySelector(sel);
+    console.log('desc "' + sel + '":', el ? JSON.stringify(el.innerText.trim().slice(0, 100)) : 'not found');
+  });
+
+  // What the extractor currently produces
+  console.log('extractLinkedInJob():', extractLinkedInJob());
+  console.groupEnd();
+};
+
 function extractWithRetry(maxAttempts, delayMs) {
   maxAttempts = maxAttempts || 8;
   delayMs = delayMs || 1200;
@@ -498,8 +643,8 @@ function extractWithRetry(maxAttempts, delayMs) {
       attempts++;
       var job = detectAndExtract();
 
-      if (job && job.title !== 'Upwork Job' && job.title !== 'Fiverr Request' &&
-          job.title !== 'Freelancer Project' && job.description && job.description.length > 50) {
+      if (job && job.title !== 'Upwork Job' && job.title !== 'LinkedIn Job' &&
+          job.description && job.description.length > 50) {
         resolve(job);
         return;
       }
@@ -718,13 +863,72 @@ function _showConfirm() {
 }
 
 /**
+ * LinkedIn-specific confirm — extracts job from the visible detail panel.
+ * Retries up to 5 times (every 800ms) waiting for the description to load.
+ */
+function _showLinkedInConfirm() {
+  _awaitingConfirm = true;
+
+  var attempts = 0;
+  var maxAttempts = 5;
+
+  function tryExtract() {
+    var jobPreview = extractLinkedInJob();
+    var hasDesc = jobPreview && jobPreview.description &&
+                  jobPreview.description !== 'No description found.' &&
+                  jobPreview.description.length > 50;
+
+    // Send whatever we have on the first attempt so sidebar shows quickly
+    // then update if we get a better description on retry
+    if (attempts === 0 || hasDesc || attempts >= maxAttempts) {
+      sendToSidebar({
+        type: 'CONFIRM_JOB',
+        payload: jobPreview || {
+          title: 'LinkedIn Job',
+          platform: 'linkedin',
+          budget_min: 0,
+          budget_max: 0,
+          description: '',
+          skills_required: [],
+        },
+      });
+    }
+
+    if (!hasDesc && attempts < maxAttempts) {
+      attempts++;
+      setTimeout(tryExtract, 800);
+    }
+  }
+
+  tryExtract();
+}
+
+/**
  * Entry point called by SIDEBAR_READY.
  * On listing pages, shows the confirm state so user chooses when to analyse.
  * On dedicated job pages, goes straight to the AI pipeline.
  */
 async function startAnalysis() {
-  // On listing/search pages with no job open at all, show "click a job" prompt
-  if (isListingPageWithNoJobOpen()) {
+  var isLinkedIn = window.location.href.includes('linkedin.com');
+
+  // LinkedIn: block only when we're NOT on a /jobs/ path AND no container is visible.
+  // On /jobs/* URLs (collections, search, recommended, view) always proceed to confirm
+  // even if the container selector doesn't match — extractLinkedInJob falls back to document.
+  var isLinkedInJobsPath = isLinkedIn && window.location.pathname.startsWith('/jobs/');
+  if (isLinkedIn && !isLinkedInJobsPath && !_linkedInJobContainer()) {
+    _awaitingConfirm = false;
+    sendToSidebar({
+      type: 'SET_STATE',
+      payload: {
+        state: 'error',
+        message: 'Navigate to a LinkedIn Jobs page, then click a job to analyse it.',
+      },
+    });
+    return;
+  }
+
+  // Upwork listing/search pages with no job open at all
+  if (!isLinkedIn && isListingPageWithNoJobOpen()) {
     _awaitingConfirm = false;
     sendToSidebar({
       type: 'SET_STATE',
@@ -738,7 +942,11 @@ async function startAnalysis() {
 
   // Always show confirm before analysis — user must explicitly trigger it.
   if (!_awaitingConfirm) {
-    _showConfirm();
+    if (isLinkedIn) {
+      _showLinkedInConfirm();
+    } else {
+      _showConfirm();
+    }
     return;
   }
 
@@ -909,14 +1117,33 @@ function watchForJobPanelOpen() {
 
   var pathname = window.location.pathname;
   var isFindWork = pathname.includes('/nx/find-work/') || pathname.includes('/nx/search/jobs');
-  if (!isFindWork) return;
+  var isLinkedIn = window.location.href.includes('linkedin.com') && pathname.startsWith('/jobs/');
 
-  // Attach to any cards already in the DOM
-  attachCardClickListeners();
+  if (!isFindWork && !isLinkedIn) return;
 
-  // Watch for new cards being added (Upwork lazy-loads the job list)
-  _jobPanelObserver = new MutationObserver(function () {
+  if (isFindWork) {
+    // Attach to any cards already in the DOM
     attachCardClickListeners();
+  }
+
+  // Watch for job detail panel appearing (both Upwork lazy-load and LinkedIn SPA navigation)
+  var _lastLinkedInContainer = null;
+  _jobPanelObserver = new MutationObserver(function () {
+    if (isFindWork) {
+      attachCardClickListeners();
+    }
+    // LinkedIn: detect when job detail panel appears for the first time or changes
+    if (isLinkedIn) {
+      var container = _linkedInJobContainer();
+      if (container && container !== _lastLinkedInContainer) {
+        _lastLinkedInContainer = container;
+        // New job detail loaded — if sidebar is open, re-trigger confirm
+        if (sidebarFrame && sidebarOpen) {
+          _awaitingConfirm = false;
+          setTimeout(function () { _showLinkedInConfirm(); }, 300);
+        }
+      }
+    }
   });
 
   _jobPanelObserver.observe(document.body, { childList: true, subtree: true });
@@ -960,7 +1187,7 @@ async function handleGetAuth() {
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 function isJobPage() {
-  return isUpworkJobPage() || isFiverrJobPage() || isFreelancerJobPage();
+  return isUpworkJobPage() || isLinkedInJobPage();
 }
 
 function init() {

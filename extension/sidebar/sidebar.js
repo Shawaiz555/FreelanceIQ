@@ -12,7 +12,7 @@ let outcomeState = { did_bid: null, did_win: null };
 
 // ─── DOM refs ─────────────────────────────────────────────────────────────────
 
-const states = ['confirm', 'extracting', 'analyzing', 'unauthenticated', 'result', 'error'];
+const states = ['confirm', 'extracting', 'analyzing', 'unauthenticated', 'result', 'result-match', 'error'];
 
 function showState(name) {
   states.forEach((s) => {
@@ -161,6 +161,92 @@ function updateWordCount(text) {
   $('word-count').textContent = `${words} words`;
 }
 
+// ─── Render job_match result (LinkedIn) ──────────────────────────────────────
+
+function renderMatchResult(analysis) {
+  currentAnalysis = analysis;
+  const { job, match_result, proposal } = analysis;
+
+  // Job card
+  $('match-job-title').textContent = job.title;
+  const metaParts = [job.platform];
+  if (job.company) metaParts.push(job.company);
+  if (job.location) metaParts.push(job.location);
+  if (job.workplace_type) metaParts.push(job.workplace_type);
+  $('match-job-meta').textContent = metaParts.join(' · ');
+
+  const matchSkillsEl = $('match-job-skills');
+  matchSkillsEl.innerHTML = (job.skills_required || [])
+    .slice(0, 6)
+    .map((s) => `<span class="skill-tag">${s}</span>`)
+    .join('');
+
+  // Update analyzing spinner label if still showing
+  const analyzingTitle = $('analyzing-title');
+  const analyzingSub = $('analyzing-sub');
+  if (analyzingTitle) analyzingTitle.textContent = 'Matching your CV…';
+  if (analyzingSub) analyzingSub.textContent = 'Comparing your profile to the job';
+
+  // Gauge — reuse buildGaugeSVG with match_score
+  const matchScore = match_result?.match_score ?? 0;
+  $('match-gauge-container').innerHTML = buildGaugeSVG(matchScore).replace('Bid Score', 'Match Score');
+
+  // Score reasoning
+  $('match-score-reasoning').textContent = match_result?.score_reasoning || '';
+
+  // Recommended action badge
+  const action = match_result?.recommended_action || 'Apply with caveats';
+  const actionKey = action.replace(/\s+/g, '-');
+  $('match-action-badge').innerHTML = `
+    <span class="action-badge action-${actionKey}">
+      ${action === 'Apply' ? '✓' : action === 'Skip' ? '✗' : '⚡'} ${action}
+    </span>`;
+
+  // No-CV warning — show if no cv_text was used (heuristic: match_score is very generic)
+  // We detect this by checking proposal.template_used
+  const noCvWarn = $('match-no-cv-warn');
+  if (proposal?.template_used === 'job-match' && matchScore < 5) {
+    noCvWarn.style.display = '';
+  } else {
+    noCvWarn.style.display = 'none';
+  }
+
+  // Matched skills
+  renderMatchSkills('match-matched-skills', match_result?.matched_skills || [], true);
+  renderMatchSkills('match-skill-gaps', match_result?.skill_gaps || [], false);
+
+  // Strengths
+  renderFlags('match-strengths', match_result?.strengths || [], true);
+
+  // Application summary
+  const summary = proposal?.cover_letter || match_result?.application_summary || '';
+  if (summary) {
+    $('match-summary-card').style.display = 'block';
+    $('match-summary-textarea').value = summary;
+    updateWordCount(summary);
+    // Reuse word count element for match
+    $('match-word-count').textContent = `${summary.trim().split(/\s+/).filter(Boolean).length} words`;
+  }
+
+  showState('result-match');
+}
+
+function renderMatchSkills(containerId, skills, isPresent) {
+  const el = $(containerId);
+  if (!skills.length) {
+    el.innerHTML = '<li style="font-size:11px;color:#94a3b8;font-style:italic;">None</li>';
+    return;
+  }
+  el.innerHTML = skills.map((s) => `
+    <li class="match-skill-item">
+      <span class="flag-icon">${isPresent
+        ? '<svg width="13" height="13" viewBox="0 0 20 20" fill="#22c55e"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/></svg>'
+        : '<svg width="13" height="13" viewBox="0 0 20 20" fill="#f59e0b"><path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>'
+      }</span>
+      ${s}
+    </li>`).join('');
+}
+
 // ─── Message listener (from content.js) ──────────────────────────────────────
 
 window.addEventListener('message', (event) => {
@@ -242,11 +328,26 @@ window.addEventListener('message', (event) => {
       // Show preview in analyzing state
       $('extracted-preview').style.display = 'block';
       $('preview-title').textContent = payload.title;
-      $('preview-meta').textContent = `${payload.platform} · $${payload.budget_min}–$${payload.budget_max}`;
+      if (payload.platform === 'linkedin') {
+        const parts = [payload.platform];
+        if (payload.company) parts.push(payload.company);
+        $('preview-meta').textContent = parts.join(' · ');
+        // Update spinner label for LinkedIn
+        const at = $('analyzing-title');
+        const as = $('analyzing-sub');
+        if (at) at.textContent = 'Matching your CV to this job…';
+        if (as) as.textContent = 'Usually takes 3–5 seconds';
+      } else {
+        $('preview-meta').textContent = `${payload.platform} · $${payload.budget_min}–$${payload.budget_max}`;
+      }
       break;
 
     case 'ANALYSIS_RESULT':
-      renderResult(payload);
+      if (payload.analysis_type === 'job_match') {
+        renderMatchResult(payload);
+      } else {
+        renderResult(payload);
+      }
       break;
   }
 });
@@ -384,6 +485,47 @@ $('reanalyse-btn').addEventListener('click', () => {
 
 // Retry on error
 $('retry-btn').addEventListener('click', () => {
+  showState('extracting');
+  window.parent.postMessage({ source: 'fiq-sidebar', type: 'SIDEBAR_READY' }, '*');
+});
+
+// ─── Job-match (LinkedIn) button handlers ─────────────────────────────────────
+
+// Copy application summary
+$('match-copy-btn').addEventListener('click', async () => {
+  const text = $('match-summary-textarea').value;
+  try {
+    await navigator.clipboard.writeText(text);
+    const btn = $('match-copy-btn');
+    const original = btn.innerHTML;
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied-flash');
+    setTimeout(() => { btn.innerHTML = original; btn.classList.remove('copied-flash'); }, 1800);
+  } catch {
+    $('match-summary-textarea').select();
+  }
+});
+
+// Download application summary
+$('match-download-btn').addEventListener('click', () => {
+  const text = $('match-summary-textarea').value;
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `application-summary-${currentAnalysis?._id || Date.now()}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// Live word count for match summary
+$('match-summary-textarea').addEventListener('input', (e) => {
+  const words = e.target.value.trim().split(/\s+/).filter(Boolean).length;
+  $('match-word-count').textContent = `${words} words`;
+});
+
+// Re-analyse match
+$('match-reanalyse-btn').addEventListener('click', () => {
   showState('extracting');
   window.parent.postMessage({ source: 'fiq-sidebar', type: 'SIDEBAR_READY' }, '*');
 });

@@ -4,8 +4,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { updateUser } from '../store/slices/authSlice';
 import { userApi } from '../services/api';
 
-// Only Upwork and Fiverr are supported
-const FREELANCE_PLATFORMS = ['Upwork', 'Fiverr'];
+// Only Upwork and LinkedIn are supported
+const FREELANCE_PLATFORMS = ['Upwork', 'LinkedIn'];
 
 const ROLE_SKILLS = {
   'Web Developer': [
@@ -325,7 +325,7 @@ export default function OnboardingPage() {
                 What do you do?
               </h2>
               <p className="text-slate-500 text-xs sm:text-sm mb-5 sm:mb-6">
-                We'll use this to calibrate market rates for your niche on Upwork and Fiverr.
+                We'll use this to calibrate market rates for your niche on Upwork.
               </p>
 
               <div className="space-y-5">
@@ -497,8 +497,7 @@ export default function OnboardingPage() {
                 Your hourly rate
               </h2>
               <p className="text-slate-500 text-xs sm:text-sm mb-5 sm:mb-6">
-                Set the rate you want to charge. We'll benchmark this against Upwork and Fiverr
-                market data.
+                Set the rate you want to charge. We'll benchmark this against Upwork market data.
               </p>
 
               {/* Market range info */}

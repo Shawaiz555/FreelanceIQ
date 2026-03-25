@@ -16,6 +16,7 @@ app.all('/api/auth/reset-password', require('../backend/auth/reset-password'));
 
 // ─── User ─────────────────────────────────────────────────────────────────────
 app.all('/api/user/profile',        require('../backend/user/profile'));
+app.all('/api/user/cv',             require('../backend/user/cv'));
 
 // ─── Analysis ─────────────────────────────────────────────────────────────────
 app.all('/api/analysis/create',     require('../backend/analysis/create'));

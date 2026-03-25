@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "FreelanceIQ — AI Bid Intelligence",
+  "name": "FreelanceIQ — AI Job Intelligence",
   "short_name": "FreelanceIQ",
-  "version": "1.0.0",
-  "description": "Get instant AI bid scores, suggested bid ranges, and AI-written cover letters on Upwork and Fiverr job pages.",
+  "version": "1.1.0",
+  "description": "Get instant AI bid scores on Upwork, and CV-matched job analysis on LinkedIn.",
 
   "permissions": [
     "storage",
@@ -14,10 +14,8 @@
   "host_permissions": [
     "https://www.upwork.com/*",
     "https://upwork.com/*",
-    "https://www.fiverr.com/*",
-    "https://fiverr.com/*",
-    "https://www.freelancer.com/*",
-    "https://freelancer.com/*",
+    "https://www.linkedin.com/*",
+    "https://linkedin.com/*",
     "http://localhost:5173/*",
     "https://freelance-iq.vercel.app/*"
   ],
@@ -31,10 +29,8 @@
       "matches": [
         "https://www.upwork.com/*",
         "https://upwork.com/*",
-        "https://www.fiverr.com/*",
-        "https://fiverr.com/*",
-        "https://www.freelancer.com/projects/*",
-        "https://freelancer.com/projects/*"
+        "https://www.linkedin.com/*",
+        "https://linkedin.com/*"
       ],
       "js": ["content.js"],
       "css": ["sidebar/sidebar.css"],
@@ -73,10 +69,8 @@
       "matches": [
         "https://www.upwork.com/*",
         "https://upwork.com/*",
-        "https://www.fiverr.com/*",
-        "https://fiverr.com/*",
-        "https://www.freelancer.com/*",
-        "https://freelancer.com/*"
+        "https://www.linkedin.com/*",
+        "https://linkedin.com/*"
       ]
     }
   ]

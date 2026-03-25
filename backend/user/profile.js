@@ -34,7 +34,7 @@ async function handler(req, res) {
     }
 
     if (body.profile && typeof body.profile === 'object') {
-      const allowed = ['title', 'skills', 'hourly_rate_usd', 'experience_years', 'upwork_url', 'fiverr_url', 'bio'];
+      const allowed = ['title', 'skills', 'hourly_rate_usd', 'experience_years', 'upwork_url', 'bio'];
       for (const key of allowed) {
         if (body.profile[key] !== undefined) {
           req.user.profile[key] = body.profile[key];

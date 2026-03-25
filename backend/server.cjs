@@ -24,6 +24,7 @@ app.all('/api/auth/reset-password', require('./auth/reset-password'));
 
 // ─── User ─────────────────────────────────────────────────────────────────────
 app.all('/api/user/profile', require('./user/profile'));
+app.all('/api/user/cv',      require('./user/cv'));
 
 // ─── Analysis ─────────────────────────────────────────────────────────────────
 app.all('/api/analysis/create', require('./analysis/create'));

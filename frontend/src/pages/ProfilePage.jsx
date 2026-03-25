@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { z } from 'zod';
 import { updateUser } from '../store/slices/authSlice';
@@ -21,7 +21,6 @@ const profileSchema = z.object({
     .optional()
     .nullable(),
   upwork_url: z.string().url('Enter a valid URL').optional().or(z.literal('')),
-  fiverr_url: z.string().url('Enter a valid URL').optional().or(z.literal('')),
   bio: z.string().max(500, 'Bio must be under 500 characters').optional().or(z.literal('')),
 });
 
@@ -148,13 +147,17 @@ export default function ProfilePage() {
     hourly_rate_usd: '',
     experience_years: '',
     upwork_url: '',
-    fiverr_url: '',
     bio: '',
   });
   const [skills, setSkills] = useState([]);
   const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // CV upload state
+  const [cvUploading, setCvUploading] = useState(false);
+  const [cvRemoving, setCvRemoving] = useState(false);
+  const cvInputRef = useRef(null);
 
   useEffect(() => {
     if (user) {
@@ -164,7 +167,6 @@ export default function ProfilePage() {
         hourly_rate_usd: user.profile?.hourly_rate_usd ?? '',
         experience_years: user.profile?.experience_years ?? '',
         upwork_url: user.profile?.upwork_url || '',
-        fiverr_url: user.profile?.fiverr_url || '',
         bio: user.profile?.bio || '',
       });
       setSkills(user.profile?.skills || []);
@@ -208,7 +210,6 @@ export default function ProfilePage() {
           hourly_rate_usd: parsed.hourly_rate_usd,
           experience_years: parsed.experience_years,
           upwork_url: parsed.upwork_url,
-          fiverr_url: parsed.fiverr_url,
           bio: parsed.bio,
         },
       };
@@ -221,6 +222,45 @@ export default function ProfilePage() {
       setError(msg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCvUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCvUploading(true);
+    try {
+      const res = await userApi.uploadCV(file);
+      dispatch(updateUser({
+        ...user,
+        profile: {
+          ...user.profile,
+          cv_filename: res.data?.filename || file.name,
+          cv_uploaded_at: new Date().toISOString(),
+        },
+      }));
+      dispatch(addNotification({ type: 'success', message: `CV uploaded: ${res.data?.chars_extracted?.toLocaleString()} characters extracted.` }));
+    } catch (err) {
+      dispatch(addNotification({ type: 'error', message: err?.message || 'CV upload failed.' }));
+    } finally {
+      setCvUploading(false);
+      if (cvInputRef.current) cvInputRef.current.value = '';
+    }
+  };
+
+  const handleCvRemove = async () => {
+    setCvRemoving(true);
+    try {
+      await userApi.removeCV();
+      dispatch(updateUser({
+        ...user,
+        profile: { ...user.profile, cv_filename: '', cv_uploaded_at: null },
+      }));
+      dispatch(addNotification({ type: 'success', message: 'CV removed.' }));
+    } catch (err) {
+      dispatch(addNotification({ type: 'error', message: err?.message || 'Failed to remove CV.' }));
+    } finally {
+      setCvRemoving(false);
     }
   };
 
@@ -447,18 +487,90 @@ export default function ProfilePage() {
                 className={inputCls(fieldErrors.upwork_url)}
               />
             </Field>
-            <Field label="Fiverr profile URL" error={fieldErrors.fiverr_url}>
-              <input
-                id="fiverr_url"
-                name="fiverr_url"
-                type="url"
-                value={form.fiverr_url}
-                onChange={handleChange}
-                placeholder="https://www.fiverr.com/yourname"
-                className={inputCls(fieldErrors.fiverr_url)}
-              />
-            </Field>
           </div>
+        </ProfileSection>
+
+        {/* CV Upload — LinkedIn job matching */}
+        <ProfileSection
+          title="CV / Resume"
+          gradient="from-sky-500 to-blue-600"
+          icon={
+            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          }
+        >
+          <p className="text-xs text-slate-500 mb-4">
+            Upload your CV so FreelanceIQ can match LinkedIn jobs to your background.
+            Only the extracted text is stored — your file is never saved on our servers.
+            Supports PDF and DOCX up to 5 MB.
+          </p>
+
+          {user?.profile?.cv_filename ? (
+            <div className="flex items-center gap-3 p-3 bg-sky-50 border border-sky-200 rounded-xl">
+              <svg className="w-5 h-5 text-sky-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-sky-800 truncate">{user.profile.cv_filename}</p>
+                {user.profile.cv_uploaded_at && (
+                  <p className="text-xs text-sky-500">
+                    Uploaded {new Date(user.profile.cv_uploaded_at).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => cvInputRef.current?.click()}
+                  disabled={cvUploading}
+                  className="text-xs font-semibold text-sky-600 hover:text-sky-800 px-2 py-1 rounded-lg hover:bg-sky-100 transition-colors"
+                >
+                  Replace
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCvRemove}
+                  disabled={cvRemoving}
+                  className="text-xs font-semibold text-red-500 hover:text-red-700 px-2 py-1 rounded-lg hover:bg-red-50 transition-colors"
+                >
+                  {cvRemoving ? 'Removing…' : 'Remove'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => cvInputRef.current?.click()}
+              disabled={cvUploading}
+              className="w-full flex flex-col items-center gap-2 p-5 border-2 border-dashed border-slate-200 rounded-xl hover:border-sky-400 hover:bg-sky-50/50 transition-all text-slate-400 hover:text-sky-600"
+            >
+              {cvUploading ? (
+                <>
+                  <svg className="animate-spin h-5 w-5 text-sky-500" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  <span className="text-xs font-medium text-sky-600">Uploading and parsing…</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                  <span className="text-xs font-medium">Click to upload PDF or DOCX</span>
+                </>
+              )}
+            </button>
+          )}
+
+          <input
+            ref={cvInputRef}
+            type="file"
+            accept=".pdf,.docx,.doc,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword"
+            onChange={handleCvUpload}
+            className="hidden"
+          />
         </ProfileSection>
 
         <div className="flex justify-end">

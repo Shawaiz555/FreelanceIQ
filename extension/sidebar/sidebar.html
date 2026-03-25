@@ -257,6 +257,27 @@
     /* ── Copied flash ── */
     @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
     .copied-flash { animation: fadeOut 1.5s ease forwards; }
+
+    /* ── Match score gauge (LinkedIn) ── */
+    .match-score-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 0; }
+    .match-gauge-label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; }
+
+    /* ── Recommended action badge ── */
+    .action-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 5px 10px; border-radius: 20px;
+      font-size: 12px; font-weight: 700;
+    }
+    .action-Apply { background: #d1fae5; color: #065f46; }
+    .action-Apply-caveats { background: #fef3c7; color: #92400e; }
+    .action-Skip { background: #fee2e2; color: #991b1b; }
+
+    /* ── Skill lists ── */
+    .match-skill-list { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+    .match-skill-item { display: flex; align-items: flex-start; gap: 7px; font-size: 12px; color: #334155; line-height: 1.4; }
+
+    /* ── No-cv warning ── */
+    .no-cv-warn { font-size: 12px; color: #92400e; background: #fef3c7; border: 1px solid #fde68a; border-radius: 10px; padding: 10px 12px; line-height: 1.5; }
   </style>
 </head>
 <body>
@@ -346,8 +367,8 @@
   <div class="state" id="state-analyzing">
     <div class="card loading-wrap">
       <div class="spinner"></div>
-      <div class="loading-title">AI is scoring this job…</div>
-      <div class="loading-sub">Usually takes 3–5 seconds</div>
+      <div class="loading-title" id="analyzing-title">AI is scoring this job…</div>
+      <div class="loading-sub" id="analyzing-sub">Usually takes 3–5 seconds</div>
     </div>
     <div class="card" id="extracted-preview" style="display:none;">
       <div class="card-label">Job detected</div>
@@ -487,6 +508,84 @@
     </button>
 
   </div><!-- /state-result -->
+
+  <!-- STATE: result-match (LinkedIn job_match) -->
+  <div class="state" id="state-result-match">
+
+    <!-- Job info -->
+    <div class="card" id="match-job-card">
+      <div class="card-label">LinkedIn job</div>
+      <div class="job-title" id="match-job-title">—</div>
+      <div class="job-meta" id="match-job-meta">—</div>
+      <div id="match-job-skills" style="margin-top:8px;"></div>
+    </div>
+
+    <!-- Match score gauge -->
+    <div class="card">
+      <div class="match-score-wrap" id="match-gauge-container">
+        <!-- Injected by JS -->
+      </div>
+      <div class="score-reasoning" id="match-score-reasoning">—</div>
+    </div>
+
+    <!-- Recommended action -->
+    <div class="card">
+      <div class="card-label">Recommendation</div>
+      <div id="match-action-badge" style="margin-bottom:10px;">—</div>
+      <!-- No-CV warning shown when user hasn't uploaded a CV -->
+      <div class="no-cv-warn" id="match-no-cv-warn" style="display:none;">
+        No CV uploaded. Upload your CV in <strong>Profile → CV / Resume</strong> for a more accurate match.
+      </div>
+    </div>
+
+    <!-- Matched skills & gaps -->
+    <div class="card">
+      <div style="display:flex;gap:12px;">
+        <div style="flex:1;">
+          <div class="card-label" style="color:#059669;">✓ You have</div>
+          <ul class="match-skill-list" id="match-matched-skills"></ul>
+        </div>
+        <div style="width:1px;background:#f1f5f9;flex-shrink:0;"></div>
+        <div style="flex:1;">
+          <div class="card-label" style="color:#d97706;">⚠ Skill gaps</div>
+          <ul class="match-skill-list" id="match-skill-gaps"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Strengths -->
+    <div class="card" id="match-strengths-card">
+      <div class="card-label">Why you're a fit</div>
+      <ul class="flag-list" id="match-strengths"></ul>
+    </div>
+
+    <!-- Application summary (editable, copyable) -->
+    <div class="card" id="match-summary-card">
+      <div class="card-label">Application starter</div>
+      <textarea id="match-summary-textarea" placeholder="AI application summary will appear here…" rows="6"></textarea>
+      <div class="word-count" id="match-word-count">0 words</div>
+      <div class="action-row">
+        <button class="btn btn-primary" id="match-copy-btn">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+          </svg>
+          Copy
+        </button>
+        <button class="btn btn-secondary" id="match-download-btn">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>
+          .txt
+        </button>
+      </div>
+    </div>
+
+    <!-- Re-analyse -->
+    <button class="analyse-btn" id="match-reanalyse-btn">
+      ↻ Re-analyse this job
+    </button>
+
+  </div><!-- /state-result-match -->
 
   <!-- STATE: error -->
   <div class="state" id="state-error">

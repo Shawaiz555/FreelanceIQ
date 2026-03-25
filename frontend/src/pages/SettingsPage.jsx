@@ -291,7 +291,7 @@ export default function SettingsPage() {
             checked={settings.extension_auto_open}
             onChange={handleToggle('extension_auto_open')}
             label="Auto-open sidebar"
-            description="Automatically show the FreelanceIQ sidebar when you open a job listing on Upwork or Fiverr."
+            description="Automatically show the FreelanceIQ sidebar when you open a job listing on Upwork or LinkedIn."
           />
           <div className="border-t border-slate-100" />
           <div className="flex items-center justify-between gap-4">

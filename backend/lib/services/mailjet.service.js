@@ -124,7 +124,7 @@ async function sendWelcome({ email, name }) {
 
   const body = `
     <h2>Welcome aboard, ${firstName}!</h2>
-    <p>You've joined <strong>FreelanceIQ</strong> — the AI that helps freelancers bid smarter, win more, and earn more on Upwork, Fiverr, and Freelancer.</p>
+    <p>You've joined <strong>FreelanceIQ</strong> — the AI that helps freelancers bid smarter on Upwork and match CV-first on LinkedIn.</p>
     <p>Here's what to do first:</p>
 
     <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;">

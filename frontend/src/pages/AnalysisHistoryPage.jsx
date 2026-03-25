@@ -4,7 +4,7 @@ import BidScoreGauge from '../components/ui/BidScoreGauge';
 import { SkeletonCard } from '../components/ui/Skeleton';
 import { analysisApi } from '../services/api';
 
-const PLATFORMS = ['All', 'upwork', 'fiverr', 'freelancer'];
+const PLATFORMS = ['All', 'upwork', 'linkedin'];
 const SORT_OPTIONS = [
   { value: 'date_desc', label: 'Newest first' },
   { value: 'date_asc', label: 'Oldest first' },

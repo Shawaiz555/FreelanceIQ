@@ -429,7 +429,7 @@ function HeroSection() {
               Browser Extension
             </span>
             <span className="w-px h-3 bg-white/20" />
-            Auto-captures job details from Upwork &amp; Fiverr
+            Auto-captures job details from Upwork &amp; LinkedIn
           </div>
         </div>
 
@@ -444,9 +444,9 @@ function HeroSection() {
             <GradientText>Win More Clients.</GradientText>
           </h1>
           <p className="text-lg sm:text-xl text-slate-400 leading-relaxed max-w-2xl mx-auto">
-            Install the FreelanceIQ extension, open any job on Upwork or Fiverr, and click{' '}
+            Install the FreelanceIQ extension, open any job on Upwork or LinkedIn, and click{' '}
             <span className="text-white font-semibold">Analyze</span>. Get an instant AI score and
-            know exactly what to fix before you send.
+            know exactly what to bid before you apply.
           </p>
         </div>
 
@@ -513,7 +513,7 @@ function HeroSection() {
           {[
             { icon: '✓', text: 'No credit card' },
             { icon: '✓', text: 'Free forever plan' },
-            { icon: '✓', text: 'Works on Upwork & Fiverr' },
+            { icon: '✓', text: 'Works on Upwork & LinkedIn' },
           ].map((item) => (
             <span
               key={item.text}
@@ -685,10 +685,10 @@ function HeroSection() {
               </div>
             </div>
 
-            {/* Floating pill — Fiverr */}
+            {/* Floating pill — LinkedIn */}
             <div className="absolute -bottom-5 -left-5 hidden lg:block bg-white rounded-2xl shadow-2xl px-4 py-2.5 animate-float-slow border border-slate-100">
               <p className="text-[10px] text-slate-400 font-medium">Also works on</p>
-              <p className="text-xs font-black text-slate-900">Fiverr Gigs</p>
+              <p className="text-xs font-black text-slate-900">LinkedIn Jobs</p>
             </div>
           </div>
         </div>
@@ -732,7 +732,7 @@ function StatsBar() {
           </p>
           {[
             { name: 'Upwork', color: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' },
-            { name: 'Fiverr', color: 'bg-green-500/10 border-green-500/20 text-green-400' },
+            { name: 'LinkedIn', color: 'bg-blue-500/10 border-blue-500/20 text-blue-400' },
           ].map((p) => (
             <div
               key={p.name}
@@ -778,7 +778,7 @@ function HowItWorksSection() {
     {
       num: '01',
       title: 'Open a Job & Click Analyze',
-      desc: 'Browse Upwork or Fiverr as normal. When you find a job you want to bid on, click the FreelanceIQ browser extension icon. It automatically reads the job description and your draft proposal — no copying or pasting needed.',
+      desc: 'Browse Upwork or LinkedIn as normal. When you find a job you want to bid on or apply for, click the FreelanceIQ browser extension icon. It automatically reads the job description — no copying or pasting needed.',
       icon: (
         <svg
           className="w-6 h-6"
@@ -799,7 +799,7 @@ function HowItWorksSection() {
     {
       num: '02',
       title: 'AI Scores Your Bid',
-      desc: 'Our AI reads your proposal, compares it to the job requirements, checks your rate against Upwork/Fiverr market data, and generates a 0–100 score in seconds.',
+      desc: 'Our AI reads your proposal or CV, compares it to the job requirements, checks your rate against Upwork market data, and generates a 0–100 score in seconds.',
       icon: (
         <svg
           className="w-6 h-6"
@@ -905,9 +905,9 @@ function FeaturesSection() {
       ),
     },
     {
-      title: 'Upwork & Fiverr Rate Intel',
+      title: 'Upwork Rate Intel',
       tag: 'Pricing',
-      desc: 'See how your proposed rate compares to real market data for your skill on Upwork and Fiverr. Stop leaving money on the table or pricing yourself out.',
+      desc: 'See how your proposed rate compares to real market data for your skill on Upwork. Stop leaving money on the table or pricing yourself out.',
       gradient: 'from-emerald-500 to-teal-600',
       icon: (
         <svg
@@ -1018,7 +1018,7 @@ function FeaturesSection() {
           <SectionHeader
             badge="Features"
             title="Everything you need to win more bids"
-            subtitle="FreelanceIQ gives you the tools that top Upwork and Fiverr freelancers use to consistently land clients."
+            subtitle="FreelanceIQ gives you the tools that top Upwork and LinkedIn job seekers use to consistently land clients."
           />
         </div>
 
@@ -1080,7 +1080,7 @@ function DemoSection() {
                 },
                 {
                   title: 'Rate positioning',
-                  desc: 'Is your bid competitive for this skill on Upwork or Fiverr?',
+                  desc: 'Is your bid competitive for this skill on Upwork?',
                 },
                 {
                   title: 'Proposal clarity',
@@ -1147,8 +1147,8 @@ function DemoSection() {
                         <p className="text-slate-400 text-sm">
                           Good — a few improvements could push this above 85
                         </p>
-                        <span className="inline-block mt-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-semibold">
-                          Fiverr Gig
+                        <span className="inline-block mt-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-semibold">
+                          Upwork Job
                         </span>
                       </div>
                     </div>
@@ -1159,7 +1159,7 @@ function DemoSection() {
                       {[
                         { label: 'Strong opening hook', positive: true },
                         { label: 'Relevant to buyer request', positive: true },
-                        { label: 'Rate slightly above Fiverr median', positive: false },
+                        { label: 'Rate slightly above Upwork median', positive: false },
                         { label: 'Weak closing — no clear CTA', positive: false },
                       ].map((item) => (
                         <div
@@ -1208,7 +1208,7 @@ function DemoSection() {
                         color: 'text-red-400 bg-red-500/10',
                       },
                       {
-                        action: 'Lower your rate by $5 to match Fiverr median for this category',
+                        action: 'Lower your rate by $5 to match Upwork median for this category',
                         impact: 'Medium',
                         color: 'text-amber-400 bg-amber-500/10',
                       },
@@ -1254,14 +1254,14 @@ function PricingSection() {
     {
       name: 'Free',
       price: { monthly: 0, annual: 0 },
-      desc: 'Great for getting started on Upwork or Fiverr.',
+      desc: 'Great for getting started on Upwork or LinkedIn.',
       cta: 'Start for Free',
       ctaVariant: 'secondary',
       popular: false,
       features: [
         { text: '5 proposal scores per month', available: true },
         { text: 'Score breakdown (all dimensions)', available: true },
-        { text: 'Upwork & Fiverr rate benchmarking', available: true },
+        { text: 'Upwork rate benchmarking', available: true },
         { text: 'Bid history (last 5)', available: true },
         { text: 'Proposal rewriter', available: false },
         { text: 'Win rate prediction', available: false },
@@ -1278,7 +1278,7 @@ function PricingSection() {
       features: [
         { text: 'Unlimited proposal scores', available: true },
         { text: 'Score breakdown (all dimensions)', available: true },
-        { text: 'Upwork & Fiverr rate benchmarking', available: true },
+        { text: 'Upwork rate benchmarking', available: true },
         { text: 'Full bid history', available: true },
         { text: 'AI proposal rewriter', available: true },
         { text: 'Win rate prediction', available: true },
@@ -1426,10 +1426,10 @@ function TestimonialsSection() {
     },
     {
       quote:
-        'The rate benchmark feature alone is worth it. I realised I was charging $10/hr below median for my Fiverr gig category. Bumped my price and still kept winning orders.',
+        'The LinkedIn job match feature is a game-changer. I can instantly see how well my skills line up with a role before spending time on an application.',
       name: 'Marcus T.',
       role: 'UI/UX Designer',
-      platform: 'Fiverr',
+      platform: 'LinkedIn',
       initials: 'MT',
       gradient: 'from-emerald-500 to-teal-600',
     },
@@ -1450,7 +1450,7 @@ function TestimonialsSection() {
         <div className="reveal mb-16">
           <SectionHeader
             badge="What freelancers say"
-            title="Real results on Upwork & Fiverr"
+            title="Real results on Upwork & LinkedIn"
             subtitle="Freelancers using FreelanceIQ send fewer proposals and win more clients."
           />
         </div>
@@ -1515,11 +1515,11 @@ function FAQSection() {
   const faqs = [
     {
       q: 'Which platforms does FreelanceIQ support?',
-      a: 'Right now FreelanceIQ works with Upwork and Fiverr. You can paste any Upwork cover letter or Fiverr gig offer message and get an instant score. Support for additional platforms is on our roadmap.',
+      a: 'Right now FreelanceIQ works with Upwork and LinkedIn. On Upwork you get instant bid scoring and rate benchmarking. On LinkedIn you get CV-matched job analysis — see your match score, skill gaps, and a tailored application summary. Support for additional platforms is on our roadmap.',
     },
     {
       q: 'How does the AI score my proposal?',
-      a: "FreelanceIQ's AI reads your proposal alongside the job description (if provided) and evaluates it across several dimensions: relevance to the job, clarity, rate positioning against Upwork/Fiverr market data, opening strength, and call-to-action quality. Each dimension is scored 0–100 and combined into an overall bid score.",
+      a: "FreelanceIQ's AI reads your proposal alongside the job description and evaluates it across several dimensions: relevance to the job, clarity, rate positioning against Upwork market data, opening strength, and call-to-action quality. For LinkedIn jobs, it matches your uploaded CV against the role's requirements and produces a match score, skill gaps, and a ready-to-use application summary.",
     },
     {
       q: 'Will the rewriter change my writing style?',
@@ -1531,7 +1531,7 @@ function FAQSection() {
     },
     {
       q: 'How is FreelanceIQ different from just asking ChatGPT?',
-      a: "ChatGPT doesn't have access to live Upwork or Fiverr market rate data, and it won't give you a structured, comparable score you can track over time. FreelanceIQ is purpose-built for freelance proposal analysis with platform-specific benchmarks and a consistent scoring system.",
+      a: "ChatGPT doesn't have access to live Upwork market rate data, and it won't give you a structured, comparable score you can track over time. FreelanceIQ is purpose-built for freelance proposal analysis and LinkedIn job matching, with platform-specific benchmarks and a consistent scoring system.",
     },
     {
       q: 'Can I cancel my subscription anytime?',
@@ -1606,8 +1606,8 @@ function CtaSection() {
             Start winning bids.
           </h2>
           <p className="text-slate-300 text-lg mb-10 leading-relaxed">
-            Join freelancers who use FreelanceIQ to score every proposal on Upwork and Fiverr before
-            hitting send.
+            Join freelancers who use FreelanceIQ to score every proposal on Upwork and match jobs on
+            LinkedIn before applying.
           </p>
         </div>
         <div className="reveal reveal-delay-2 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -1659,8 +1659,8 @@ function Footer() {
               </span>
             </div>
             <p className="text-slate-400 text-sm leading-relaxed max-w-xs mb-6">
-              AI-powered proposal scoring for Upwork and Fiverr freelancers. Score your bid before
-              you send it.
+              AI-powered proposal scoring for Upwork and LinkedIn job matching. Score your bid or
+              match your CV before you apply.
             </p>
             <div className="flex gap-3">
               {['twitter', 'linkedin'].map((social) => (
@@ -1735,7 +1735,7 @@ function Footer() {
           <p className="text-slate-500 text-xs">
             © {new Date().getFullYear()} FreelanceIQ. All rights reserved.
           </p>
-          <p className="text-slate-600 text-xs">Built for Upwork &amp; Fiverr freelancers</p>
+          <p className="text-slate-600 text-xs">Built for Upwork &amp; LinkedIn job seekers</p>
         </div>
       </div>
     </footer>

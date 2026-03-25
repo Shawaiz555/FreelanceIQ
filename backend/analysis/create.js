@@ -1,7 +1,7 @@
 const connectDB = require('../lib/db');
 const Analysis = require('../lib/models/Analysis');
 const User = require('../lib/models/User');
-const { classifyJob, scoreBid, generateProposal } = require('../lib/services/openai.service');
+const { classifyJob, scoreBid, generateProposal, matchJobToProfile } = require('../lib/services/openai.service');
 const { enrichJobWithPricing } = require('../lib/services/pricing.service');
 const { getCached, setCached } = require('../lib/redis');
 const { AppError, withErrorHandler, withAuth, withRateLimit } = require('../lib/withMiddleware');
@@ -29,7 +29,6 @@ async function checkQuota(user) {
   const resetDate = user.usage.reset_date ? new Date(user.usage.reset_date) : now;
 
   if (now >= resetDate) {
-    // New billing month — reset counter
     user.usage.analyses_this_month = 0;
     user.usage.reset_date = new Date(now.getFullYear(), now.getMonth() + 1, 1);
     await user.save();
@@ -45,49 +44,59 @@ async function checkQuota(user) {
   }
 }
 
-// ─── Main handler ─────────────────────────────────────────────────────────────
+// ─── LinkedIn job-match pipeline ──────────────────────────────────────────────
 
-async function handler(req, res) {
-  if (req.method !== 'POST') throw new AppError('Method not allowed', 405);
+async function runJobMatchPipeline(jobData, fullUser) {
+  const { data: matchData, tokensUsed } = await matchJobToProfile(jobData, fullUser.profile);
 
-  const body = await parseBody(req);
-  const { platform, url, title, description, budget_min, budget_max, skills_required, client_hires } = body;
+  const savedAnalysis = await Analysis.create({
+    user_id: fullUser._id,
+    analysis_type: 'job_match',
+    job: {
+      platform: 'linkedin',
+      url: jobData.url,
+      title: jobData.title,
+      description: jobData.description,
+      skills_required: jobData.skills_required || [],
+      company: jobData.company || '',
+      location: jobData.location || '',
+      workplace_type: jobData.workplace_type || '',
+      seniority_level: jobData.seniority_level || '',
+      budget_min: 0,
+      budget_max: 0,
+      client_hires: 0,
+    },
+    match_result: {
+      match_score: matchData.match_score,
+      score_reasoning: matchData.score_reasoning,
+      matched_skills: matchData.matched_skills,
+      skill_gaps: matchData.skill_gaps,
+      strengths: matchData.strengths,
+      application_summary: matchData.application_summary,
+      recommended_action: matchData.recommended_action,
+    },
+    // Store application_summary as cover_letter for easy reuse by the sidebar
+    proposal: {
+      cover_letter: matchData.application_summary,
+      tone_detected: 'professional',
+      template_used: 'job-match',
+      word_count: matchData.application_summary.trim().split(/\s+/).length,
+    },
+    ai_tokens_used: tokensUsed,
+  });
 
-  // Validate required fields
-  if (!title || typeof title !== 'string' || !title.trim()) {
-    throw new AppError('Job title is required', 400);
-  }
-  if (!description || typeof description !== 'string' || description.trim().length < 50) {
-    throw new AppError('Job description must be at least 50 characters', 400);
-  }
-  if (!platform || !['upwork', 'fiverr', 'freelancer', 'toptal', 'other'].includes(platform)) {
-    throw new AppError('platform must be one of: upwork, fiverr, freelancer, toptal, other', 400);
-  }
+  return savedAnalysis;
+}
 
-  const jobData = {
-    platform,
-    url: url || '',
-    title: title.trim(),
-    description: description.trim(),
-    budget_min: Number(budget_min) || 0,
-    budget_max: Number(budget_max) || 0,
-    skills_required: Array.isArray(skills_required) ? skills_required : [],
-    client_hires: Number(client_hires) || 0,
-  };
+// ─── Bid pipeline (Upwork — existing flow) ────────────────────────────────────
 
-  await connectDB();
-  const user = req.user;
-
-  // Load user with select fields needed for quota + profile
-  const fullUser = await User.findById(user._id);
-  await checkQuota(fullUser);
-
-  // ── Check Redis cache ───────────────────────────────────────────────────────
+async function runBidPipeline(jobData, fullUser) {
+  // Check cache
   const cached = await getCached(jobData.description);
   if (cached) {
-    // Still save a new Analysis document so history is tracked, but skip AI cost
     const savedAnalysis = await Analysis.create({
-      user_id: user._id,
+      user_id: fullUser._id,
+      analysis_type: 'bid',
       job: {
         platform: jobData.platform,
         url: jobData.url,
@@ -115,46 +124,24 @@ async function handler(req, res) {
         template_used: cached.proposal.template_used,
         word_count: cached.proposal.word_count,
       },
-      ai_tokens_used: 0, // cached — no tokens used
+      ai_tokens_used: 0,
     });
-
-    // Increment usage
-    await User.findByIdAndUpdate(user._id, {
-      $inc: { 'usage.analyses_this_month': 1, 'usage.total_analyses': 1 },
-    });
-
-    return res.status(201).json({ success: true, data: savedAnalysis, cached: true });
+    return { savedAnalysis, cached: true };
   }
 
-  // ── Full AI pipeline ────────────────────────────────────────────────────────
-
-  // Step 1: Classify job
+  // Full AI pipeline
   const { data: classifyData, tokensUsed: t1 } = await classifyJob(jobData);
-
-  // Step 2: Enrich with pricing data
   const { pricingData } = await enrichJobWithPricing(jobData, classifyData.category);
-
-  // Step 3: Score the bid
   const { data: scoreData, tokensUsed: t2 } = await scoreBid(
-    jobData,
-    classifyData,
-    pricingData,
-    fullUser.profile
+    jobData, classifyData, pricingData, fullUser.profile
   );
-
-  // Step 4: Generate proposal
   const { data: proposalData, tokensUsed: t3 } = await generateProposal(
-    jobData,
-    classifyData,
-    scoreData,
-    { ...fullUser.profile, name: fullUser.name }
+    jobData, classifyData, scoreData, { ...fullUser.profile, name: fullUser.name }
   );
 
-  const totalTokens = t1 + t2 + t3;
-
-  // ── Persist to MongoDB ──────────────────────────────────────────────────────
   const savedAnalysis = await Analysis.create({
-    user_id: user._id,
+    user_id: fullUser._id,
+    analysis_type: 'bid',
     job: {
       platform: jobData.platform,
       url: jobData.url,
@@ -182,24 +169,82 @@ async function handler(req, res) {
       template_used: proposalData.template_used,
       word_count: proposalData.word_count,
     },
-    ai_tokens_used: totalTokens,
+    ai_tokens_used: t1 + t2 + t3,
   });
 
-  // Increment usage
-  await User.findByIdAndUpdate(user._id, {
-    $inc: { 'usage.analyses_this_month': 1, 'usage.total_analyses': 1 },
-  });
-
-  // ── Cache the AI results ────────────────────────────────────────────────────
   await setCached(jobData.description, {
     classify: classifyData,
     score: scoreData,
     proposal: proposalData,
   });
 
-  res.status(201).json({ success: true, data: savedAnalysis, cached: false });
+  return { savedAnalysis, cached: false };
+}
 
-  // Send first-analysis email if this is the user's first ever analysis (non-blocking)
+// ─── Main handler ─────────────────────────────────────────────────────────────
+
+async function handler(req, res) {
+  if (req.method !== 'POST') throw new AppError('Method not allowed', 405);
+
+  const body = await parseBody(req);
+  const {
+    platform, url, title, description,
+    budget_min, budget_max, skills_required, client_hires,
+    // LinkedIn-specific
+    company, location, workplace_type, seniority_level,
+  } = body;
+
+  // Validate required fields
+  if (!title || typeof title !== 'string' || !title.trim()) {
+    throw new AppError('Job title is required', 400);
+  }
+  if (!description || typeof description !== 'string' || description.trim().length < 50) {
+    throw new AppError('Job description must be at least 50 characters', 400);
+  }
+  const validPlatforms = ['upwork', 'linkedin', 'other'];
+  if (!platform || !validPlatforms.includes(platform)) {
+    throw new AppError(`platform must be one of: ${validPlatforms.join(', ')}`, 400);
+  }
+
+  const jobData = {
+    platform,
+    url: url || '',
+    title: title.trim(),
+    description: description.trim(),
+    budget_min: Number(budget_min) || 0,
+    budget_max: Number(budget_max) || 0,
+    skills_required: Array.isArray(skills_required) ? skills_required : [],
+    client_hires: Number(client_hires) || 0,
+    // LinkedIn extras (safe to include for all platforms — ignored if blank)
+    company: company || '',
+    location: location || '',
+    workplace_type: workplace_type || '',
+    seniority_level: seniority_level || '',
+  };
+
+  await connectDB();
+  const fullUser = await User.findById(req.user._id);
+  await checkQuota(fullUser);
+
+  let savedAnalysis;
+  let fromCache = false;
+
+  if (platform === 'linkedin') {
+    savedAnalysis = await runJobMatchPipeline(jobData, fullUser);
+  } else {
+    const result = await runBidPipeline(jobData, fullUser);
+    savedAnalysis = result.savedAnalysis;
+    fromCache = result.cached;
+  }
+
+  // Increment usage counter
+  await User.findByIdAndUpdate(req.user._id, {
+    $inc: { 'usage.analyses_this_month': 1, 'usage.total_analyses': 1 },
+  });
+
+  res.status(201).json({ success: true, data: savedAnalysis, cached: fromCache });
+
+  // Send first-analysis email (non-blocking)
   if (fullUser.usage.total_analyses === 0) {
     sendFirstAnalysis({ email: fullUser.email, name: fullUser.name, analysis: savedAnalysis })
       .catch((err) => console.error('[Analysis] First-analysis email failed:', err.message));
@@ -209,8 +254,8 @@ async function handler(req, res) {
 module.exports = withErrorHandler(
   withAuth(
     withRateLimit(handler, {
-      windowMs: 60 * 1000,   // 1 minute window
-      max: 5,                 // max 5 analyses per minute per IP
+      windowMs: 60 * 1000,
+      max: 5,
       message: 'Too many analysis requests. Please wait a moment.',
     })
   )

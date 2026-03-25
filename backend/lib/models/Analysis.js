@@ -8,10 +8,17 @@ const analysisSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    // "bid"       = freelance bid scoring  (Upwork)
+    // "job_match" = CV-to-job matching     (LinkedIn)
+    analysis_type: {
+      type: String,
+      enum: ['bid', 'job_match'],
+      default: 'bid',
+    },
     job: {
       platform: {
         type: String,
-        enum: ['upwork', 'fiverr', 'freelancer', 'toptal', 'other'],
+        enum: ['upwork', 'linkedin', 'other'],
         required: true,
       },
       url: { type: String, default: '' },
@@ -21,7 +28,13 @@ const analysisSchema = new mongoose.Schema(
       budget_max: { type: Number, default: 0 },
       skills_required: { type: [String], default: [] },
       client_hires: { type: Number, default: 0 },
+      // LinkedIn-specific
+      company: { type: String, default: '' },
+      location: { type: String, default: '' },
+      workplace_type: { type: String, default: '' },
+      seniority_level: { type: String, default: '' },
     },
+    // Bid analysis result (Upwork)
     result: {
       bid_score: { type: Number, min: 0, max: 100 },
       score_reasoning: { type: String },
@@ -32,6 +45,19 @@ const analysisSchema = new mongoose.Schema(
       green_flags: { type: [String] },
       category: { type: String },
       competition_level: { type: String, enum: ['Low', 'Medium', 'High'] },
+    },
+    // Job-match result (LinkedIn)
+    match_result: {
+      match_score: { type: Number, min: 0, max: 100 },
+      score_reasoning: { type: String },
+      matched_skills: { type: [String], default: [] },
+      skill_gaps: { type: [String], default: [] },
+      strengths: { type: [String], default: [] },
+      application_summary: { type: String, default: '' },
+      recommended_action: {
+        type: String,
+        enum: ['Apply', 'Apply with caveats', 'Skip'],
+      },
     },
     proposal: {
       cover_letter: { type: String, default: '' },

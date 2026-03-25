@@ -212,4 +212,64 @@ Freelancer background:
   return result;
 }
 
-module.exports = { classifyJob, scoreBid, generateProposal };
+// ─── matchJobToProfile ────────────────────────────────────────────────────────
+//
+// Used for LinkedIn jobs: compares a job description + requirements against the
+// user's CV text and profile. Returns a match score, skill gaps, strengths, and
+// a tailored application summary the user can adapt into a cover letter.
+
+const MatchSchema = z.object({
+  match_score: z.number().min(0).max(100),
+  score_reasoning: z.string(),
+  matched_skills: z.array(z.string()),
+  skill_gaps: z.array(z.string()),
+  strengths: z.array(z.string()),
+  application_summary: z.string().min(80),
+  recommended_action: z.enum(['Apply', 'Apply with caveats', 'Skip']),
+});
+
+async function matchJobToProfile(jobData, userProfile) {
+  const {
+    title, description, company, location, workplace_type,
+    seniority_level, skills_required,
+  } = jobData;
+
+  const cvSection = userProfile.cv_text
+    ? `CV / Resume:\n${userProfile.cv_text.slice(0, 6000)}`
+    : `No CV uploaded. Profile only:\n- Title: ${userProfile.title || 'Not set'}\n- Skills: ${(userProfile.skills || []).join(', ') || 'Not specified'}\n- Experience: ${userProfile.experience_years || 0} years\n- Bio: ${userProfile.bio || 'Not provided'}`;
+
+  const messages = [
+    {
+      role: 'system',
+      content: `You are a career advisor and job-fit analyst. Compare a job posting to a candidate's CV and profile.
+Return a JSON object with:
+- match_score: 0-100 integer (overall fit; 100 = perfect match)
+- score_reasoning: 1-2 sentence explanation of the score
+- matched_skills: skills the candidate clearly has that the job needs (max 8)
+- skill_gaps: required or preferred skills the candidate lacks (max 6)
+- strengths: 2-4 specific reasons this candidate is well-suited (based on their CV)
+- application_summary: a 100-150 word paragraph the candidate can use as a starting point for their cover letter / LinkedIn message. Write in first person, highlight fit.
+- recommended_action: "Apply" | "Apply with caveats" | "Skip"`,
+    },
+    {
+      role: 'user',
+      content: `Job: ${title}
+Company: ${company || 'Not specified'}
+Location: ${location || 'Not specified'}${workplace_type ? ` (${workplace_type})` : ''}
+Seniority: ${seniority_level || 'Not specified'}
+Required skills: ${(skills_required || []).join(', ') || 'Not listed'}
+
+Job description:
+${description.slice(0, 3000)}
+
+---
+
+Candidate:
+${cvSection}`,
+    },
+  ];
+
+  return chatJSON(messages, MatchSchema);
+}
+
+module.exports = { classifyJob, scoreBid, generateProposal, matchJobToProfile };

@@ -136,6 +136,20 @@ export const userApi = {
     const { data } = await client.patch('/user/profile', updates);
     return data;
   },
+
+  async uploadCV(file) {
+    const form = new FormData();
+    form.append('cv', file);
+    const { data } = await client.post('/user/cv', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return data;
+  },
+
+  async removeCV() {
+    const { data } = await client.delete('/user/cv');
+    return data;
+  },
 };
 
 // ─── Analysis ─────────────────────────────────────────────────────────────────

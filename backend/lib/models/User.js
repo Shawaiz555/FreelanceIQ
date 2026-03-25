@@ -26,8 +26,11 @@ const userSchema = new mongoose.Schema(
       hourly_rate_usd: { type: Number, default: 0, min: 0 },
       experience_years: { type: Number, default: 0, min: 0 },
       upwork_url: { type: String, default: '' },
-      fiverr_url: { type: String, default: '' },
       bio: { type: String, default: '', maxlength: 500 },
+      // CV parsed text — used for LinkedIn job matching
+      cv_text: { type: String, default: '', maxlength: 20000 },
+      cv_filename: { type: String, default: '' },
+      cv_uploaded_at: { type: Date, default: null },
     },
     subscription: {
       tier: { type: String, enum: ['free', 'pro', 'agency'], default: 'free' },

@@ -1,6 +1,6 @@
 # FreelanceIQ Chrome Extension
 
-AI-powered bid intelligence for Upwork, Fiverr, and Freelancer.com.
+AI-powered bid intelligence for Upwork and LinkedIn.
 
 ---
 
@@ -31,8 +31,7 @@ AI-powered bid intelligence for Upwork, Fiverr, and Freelancer.com.
 | Platform | URL pattern | Notes |
 |---|---|---|
 | Upwork | `/jobs/*` or `~hex` paths | Job detail pages |
-| Fiverr | `/find_work/*`, `/request/*` | Buyer request pages |
-| Freelancer.com | `/projects/*` | Project detail pages |
+| LinkedIn | `/jobs/view/*`, `/jobs/search/*` | Job detail pages |
 
 ---
 
@@ -54,8 +53,8 @@ Run through these page types to verify DOM extraction works:
 - [ ] Page reload on job URL (hard refresh)
 - [ ] Upwork search results page — sidebar should NOT appear
 - [ ] Profile page — sidebar should NOT appear
-- [ ] Fiverr buyer request page
-- [ ] Freelancer.com project page
+- [ ] LinkedIn job detail page (CV match flow)
+- [ ] LinkedIn job with no skills listed
 - [ ] Free tier: 5th analysis shows quota warning
 - [ ] Free tier: 6th analysis is blocked
 - [ ] Re-analyse button resets and re-runs analysis
@@ -128,8 +127,7 @@ extension/
 ├── content.js             # Injected into job pages: sidebar + extraction
 ├── extractors/
 │   ├── upwork.js          # Upwork DOM selectors (reference — inlined in content.js)
-│   ├── fiverr.js          # Fiverr DOM selectors (reference)
-│   └── freelancer.js      # Freelancer.com DOM selectors (reference)
+│   └── linkedin.js        # LinkedIn DOM selectors (reference — inlined in content.js)
 ├── sidebar/
 │   ├── sidebar.html       # Full sidebar UI (self-contained)
 │   ├── sidebar.css        # Minimal shared styles
