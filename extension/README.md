@@ -9,7 +9,7 @@ AI-powered bid intelligence for Upwork, Fiverr, and Freelancer.com.
 1. Open Chrome and navigate to `chrome://extensions`
 2. Enable **Developer mode** (toggle in the top-right corner)
 3. Click **Load unpacked**
-4. Select the `extension/` folder inside this project (`d:\MyProduct\extension`)
+4. Select the `extension/` folder inside this project (`d:\FreelanceIQ\extension`)
 5. The FreelanceIQ extension will appear in your extensions list
 
 > **Tip:** Pin it to your toolbar by clicking the puzzle-piece icon → pin FreelanceIQ.
@@ -75,7 +75,7 @@ UPSTASH_REDIS_REST_TOKEN=...
 
 The extension's `background.js` points to:
 ```js
-const API_BASE = 'https://freelanceiq.app/api';
+const API_BASE = 'https://freelance-iq.vercel.app/api';
 ```
 
 For local development, change this to:

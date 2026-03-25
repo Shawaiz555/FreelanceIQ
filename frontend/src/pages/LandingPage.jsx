@@ -42,7 +42,7 @@ function useScrollReveal(threshold = 0.12) {
           }
         });
       },
-      { threshold, rootMargin: '0px 0px -50px 0px' }
+      { threshold, rootMargin: '0px 0px -50px 0px' },
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -71,11 +71,13 @@ function useCountUp(target, duration = 1800, isActive = false) {
 
 function SectionBadge({ children, dark = false }) {
   return (
-    <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider ${
-      dark
-        ? 'bg-indigo-500/20 border border-indigo-400/30 text-indigo-300'
-        : 'bg-blue-50 border border-blue-200 text-blue-600'
-    }`}>
+    <span
+      className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider ${
+        dark
+          ? 'bg-indigo-500/20 border border-indigo-400/30 text-indigo-300'
+          : 'bg-blue-50 border border-blue-200 text-blue-600'
+      }`}
+    >
       {children}
     </span>
   );
@@ -85,15 +87,19 @@ function SectionHeader({ badge, title, subtitle, dark = false, center = true }) 
   return (
     <div className={center ? 'text-center' : ''}>
       {badge && <SectionBadge dark={dark}>{badge}</SectionBadge>}
-      <h2 className={`text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight mt-4 leading-tight ${
-        dark ? 'text-white' : 'text-slate-900'
-      }`}>
+      <h2
+        className={`text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight mt-4 leading-tight ${
+          dark ? 'text-white' : 'text-slate-900'
+        }`}
+      >
         {title}
       </h2>
       {subtitle && (
-        <p className={`mt-4 text-base sm:text-lg leading-relaxed max-w-2xl ${center ? 'mx-auto' : ''} ${
-          dark ? 'text-slate-300' : 'text-slate-500'
-        }`}>
+        <p
+          className={`mt-4 text-base sm:text-lg leading-relaxed max-w-2xl ${center ? 'mx-auto' : ''} ${
+            dark ? 'text-slate-300' : 'text-slate-500'
+          }`}
+        >
           {subtitle}
         </p>
       )}
@@ -126,9 +132,18 @@ function ScoreGauge({ score = 81, size = 140 }) {
             <stop offset="100%" stopColor="#60a5fa" />
           </linearGradient>
         </defs>
-        <circle cx="50" cy="50" r={radius} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8" />
         <circle
-          cx="50" cy="50" r={radius}
+          cx="50"
+          cy="50"
+          r={radius}
+          fill="none"
+          stroke="rgba(255,255,255,0.1)"
+          strokeWidth="8"
+        />
+        <circle
+          cx="50"
+          cy="50"
+          r={radius}
           fill="none"
           stroke={color}
           strokeWidth="8"
@@ -138,10 +153,29 @@ function ScoreGauge({ score = 81, size = 140 }) {
           transform="rotate(-90 50 50)"
           style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(0.16,1,0.3,1)' }}
         />
-        <text x="50" y="47" textAnchor="middle" dominantBaseline="middle"
-          fontSize="20" fontWeight="800" fill="white" fontFamily="Inter,system-ui,sans-serif">{score}</text>
-        <text x="50" y="62" textAnchor="middle" dominantBaseline="middle"
-          fontSize="8" fill="rgba(148,163,184,0.9)" fontFamily="Inter,system-ui,sans-serif">/ 100</text>
+        <text
+          x="50"
+          y="47"
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize="20"
+          fontWeight="800"
+          fill="white"
+          fontFamily="Inter,system-ui,sans-serif"
+        >
+          {score}
+        </text>
+        <text
+          x="50"
+          y="62"
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize="8"
+          fill="rgba(148,163,184,0.9)"
+          fontFamily="Inter,system-ui,sans-serif"
+        >
+          / 100
+        </text>
       </svg>
     </div>
   );
@@ -149,16 +183,34 @@ function ScoreGauge({ score = 81, size = 140 }) {
 
 function CheckItem({ children, available = true }) {
   return (
-    <li className={`flex items-start gap-3 text-sm ${available ? 'text-slate-600' : 'text-slate-300 line-through'}`}>
-      <span className={`mt-0.5 shrink-0 w-4 h-4 rounded-full flex items-center justify-center ${
-        available ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-300'
-      }`}>
+    <li
+      className={`flex items-start gap-3 text-sm ${available ? 'text-slate-600' : 'text-slate-300 line-through'}`}
+    >
+      <span
+        className={`mt-0.5 shrink-0 w-4 h-4 rounded-full flex items-center justify-center ${
+          available ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-300'
+        }`}
+      >
         {available ? (
           <svg className="w-2.5 h-2.5" viewBox="0 0 10 10" fill="currentColor">
-            <path d="M8.5 2.5L4 7 1.5 4.5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+            <path
+              d="M8.5 2.5L4 7 1.5 4.5"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         ) : (
-          <svg className="w-2.5 h-2.5" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+          <svg
+            className="w-2.5 h-2.5"
+            viewBox="0 0 10 10"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          >
             <path d="M3 3l4 4M7 3L3 7" />
           </svg>
         )}
@@ -203,22 +255,33 @@ function Navbar() {
     } else {
       document.body.style.overflow = 'unset';
     }
-    return () => { document.body.style.overflow = 'unset'; };
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
   }, [menuOpen]);
 
   return (
     <>
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled
-          ? 'bg-[#0f172a]/90 backdrop-blur-xl border-b border-indigo-500/15 shadow-lg shadow-indigo-950/40'
-          : 'bg-transparent'
-      }`}>
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          isScrolled
+            ? 'bg-[#0f172a]/90 backdrop-blur-xl border-b border-indigo-500/15 shadow-lg shadow-indigo-950/40'
+            : 'bg-transparent'
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           {/* Logo */}
-          <button onClick={() => scrollTo('hero')} className="flex items-center gap-2 focus:outline-none">
+          <button
+            onClick={() => scrollTo('hero')}
+            className="flex items-center gap-2 focus:outline-none"
+          >
             <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/30">
               <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
+                  clipRule="evenodd"
+                />
               </svg>
             </div>
             <span className="font-black text-white text-lg tracking-tight">
@@ -241,7 +304,10 @@ function Navbar() {
 
           {/* CTA */}
           <div className="hidden md:flex items-center gap-3">
-            <Link to="/login" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors px-4 py-2">
+            <Link
+              to="/login"
+              className="text-sm font-semibold text-slate-300 hover:text-white transition-colors px-4 py-2"
+            >
               Sign in
             </Link>
             <Link to="/register">
@@ -257,7 +323,13 @@ function Navbar() {
             onClick={openMenu}
             aria-label="Open menu"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
@@ -271,11 +343,24 @@ function Navbar() {
             className={`absolute inset-0 backdrop-blur-sm transition-all duration-300 ${drawerVisible ? 'bg-black/60' : 'bg-black/0'}`}
             onClick={closeMenu}
           />
-          <div className={`absolute right-0 top-0 bottom-0 w-72 bg-[#0f172a] border-l border-indigo-500/15 shadow-2xl flex flex-col p-6 transition-transform duration-300 ease-out ${drawerVisible ? 'translate-x-0' : 'translate-x-full'}`}>
+          <div
+            className={`absolute right-0 top-0 bottom-0 w-72 bg-[#0f172a] border-l border-indigo-500/15 shadow-2xl flex flex-col p-6 transition-transform duration-300 ease-out ${drawerVisible ? 'translate-x-0' : 'translate-x-full'}`}
+          >
             <div className="flex items-center justify-between mb-8">
-              <span className="font-black text-white text-lg">Freelance<span className="text-blue-400">IQ</span></span>
-              <button onClick={closeMenu} className="p-2 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-white/10">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <span className="font-black text-white text-lg">
+                Freelance<span className="text-blue-400">IQ</span>
+              </span>
+              <button
+                onClick={closeMenu}
+                className="p-2 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-white/10"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -292,7 +377,11 @@ function Navbar() {
               ))}
             </nav>
             <div className="flex flex-col gap-3 pt-6 border-t border-white/10">
-              <Link to="/login" className="text-center text-sm font-semibold text-slate-300 hover:text-white transition-colors py-2" onClick={closeMenu}>
+              <Link
+                to="/login"
+                className="text-center text-sm font-semibold text-slate-300 hover:text-white transition-colors py-2"
+                onClick={closeMenu}
+              >
                 Sign in
               </Link>
               <Link to="/register" onClick={closeMenu}>
@@ -310,12 +399,19 @@ function Navbar() {
 
 function HeroSection() {
   return (
-    <section id="hero" className="relative hero-gradient-bg min-h-screen flex items-center overflow-hidden pt-16">
+    <section
+      id="hero"
+      className="relative hero-gradient-bg min-h-screen flex items-center overflow-hidden pt-16"
+    >
       {/* Grid overlay */}
-      <div className="absolute inset-0 pointer-events-none" style={{
-        backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
-        backgroundSize: '64px 64px',
-      }} />
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage:
+            'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
+          backgroundSize: '64px 64px',
+        }}
+      />
 
       {/* Glow orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -338,49 +434,91 @@ function HeroSection() {
         </div>
 
         {/* Headline — centered */}
-        <div className="text-center max-w-4xl mx-auto animate-fade-in-up mb-6" style={{ animationDelay: '80ms' }}>
+        <div
+          className="text-center max-w-4xl mx-auto animate-fade-in-up mb-6"
+          style={{ animationDelay: '80ms' }}
+        >
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.04] mb-6">
-            Score Every Bid.<br />
+            Score Every Bid.
+            <br />
             <GradientText>Win More Clients.</GradientText>
           </h1>
           <p className="text-lg sm:text-xl text-slate-400 leading-relaxed max-w-2xl mx-auto">
             Install the FreelanceIQ extension, open any job on Upwork or Fiverr, and click{' '}
-            <span className="text-white font-semibold">Analyze</span>. Get an instant AI score and know exactly what to fix before you send.
+            <span className="text-white font-semibold">Analyze</span>. Get an instant AI score and
+            know exactly what to fix before you send.
           </p>
         </div>
 
         {/* CTAs — centered */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-10 animate-fade-in-up" style={{ animationDelay: '160ms' }}>
+        <div
+          className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-10 animate-fade-in-up"
+          style={{ animationDelay: '160ms' }}
+        >
           <Link to="/register">
             <button className="group relative inline-flex items-center gap-2.5 px-7 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-black rounded-2xl shadow-2xl shadow-blue-600/40 transition-all hover:shadow-blue-500/50 hover:-translate-y-0.5 active:scale-[0.98]">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                />
               </svg>
               Install Free Extension
-              <svg className="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <svg
+                className="w-4 h-4 transition-transform group-hover:translate-x-0.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
             </button>
           </Link>
           <button
-            onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+            onClick={() =>
+              document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })
+            }
             className="inline-flex items-center gap-2 px-7 py-4 rounded-2xl border border-white/15 bg-white/5 backdrop-blur-sm text-white text-sm font-semibold hover:bg-white/10 hover:border-white/25 transition-all"
           >
-            <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+            <svg
+              className="w-4 h-4 text-slate-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
+              />
             </svg>
             See How It Works
           </button>
         </div>
 
         {/* Trust pills */}
-        <div className="flex flex-wrap items-center justify-center gap-4 mb-16 animate-fade-in-up" style={{ animationDelay: '240ms' }}>
+        <div
+          className="flex flex-wrap items-center justify-center gap-4 mb-16 animate-fade-in-up"
+          style={{ animationDelay: '240ms' }}
+        >
           {[
             { icon: '✓', text: 'No credit card' },
             { icon: '✓', text: 'Free forever plan' },
             { icon: '✓', text: 'Works on Upwork & Fiverr' },
           ].map((item) => (
-            <span key={item.text} className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+            <span
+              key={item.text}
+              className="flex items-center gap-1.5 text-xs text-slate-400 font-medium"
+            >
               <span className="text-emerald-400 font-bold">{item.icon}</span>
               {item.text}
             </span>
@@ -398,16 +536,32 @@ function HeroSection() {
                 <div className="w-3 h-3 rounded-full bg-emerald-500/60" />
               </div>
               <div className="flex-1 bg-slate-700/60 rounded-lg px-3 py-1.5 flex items-center gap-2">
-                <svg className="w-3 h-3 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                <svg
+                  className="w-3 h-3 text-slate-500 shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                  />
                 </svg>
-                <span className="text-xs text-slate-400 font-mono">upwork.com/jobs/react-developer-dashboard</span>
+                <span className="text-xs text-slate-400 font-mono">
+                  upwork.com/jobs/react-developer-dashboard
+                </span>
               </div>
               {/* Extension button */}
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600/25 border border-blue-500/30 cursor-pointer hover:bg-blue-600/35 transition-colors">
                 <div className="w-4 h-4 bg-gradient-to-br from-blue-500 to-indigo-600 rounded flex items-center justify-center">
                   <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                    <path
+                      fillRule="evenodd"
+                      d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </div>
                 <span className="text-xs text-blue-300 font-bold">FreelanceIQ</span>
@@ -422,31 +576,50 @@ function HeroSection() {
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-bold border border-emerald-500/20">Upwork</span>
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-bold border border-emerald-500/20">
+                          Upwork
+                        </span>
                         <span className="text-[10px] text-slate-500">Posted 3 hours ago</span>
                       </div>
-                      <h3 className="text-white font-bold text-sm mb-1">Build a React Admin Dashboard with Charts</h3>
+                      <h3 className="text-white font-bold text-sm mb-1">
+                        Build a React Admin Dashboard with Charts
+                      </h3>
                       <p className="text-slate-400 text-xs leading-relaxed line-clamp-3">
-                        Looking for an experienced React developer to build a responsive admin dashboard. Must include chart components (Recharts or Chart.js), data tables with sorting, and a clean modern UI...
+                        Looking for an experienced React developer to build a responsive admin
+                        dashboard. Must include chart components (Recharts or Chart.js), data tables
+                        with sorting, and a clean modern UI...
                       </p>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2 mb-5">
                     {['React', 'TypeScript', 'Recharts', 'Tailwind CSS'].map((tag) => (
-                      <span key={tag} className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 text-[10px] border border-slate-700">{tag}</span>
+                      <span
+                        key={tag}
+                        className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 text-[10px] border border-slate-700"
+                      >
+                        {tag}
+                      </span>
                     ))}
                   </div>
                   {/* Proposal text area */}
                   <div className="bg-slate-800/60 rounded-xl border border-white/5 p-3 mb-4">
-                    <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-2">Your Cover Letter</p>
+                    <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-2">
+                      Your Cover Letter
+                    </p>
                     <p className="text-xs text-slate-300 leading-relaxed opacity-70">
-                      Hi, I have 5 years of React experience and have built several admin dashboards. I can deliver exactly what you need including all chart components and responsive layout...
+                      Hi, I have 5 years of React experience and have built several admin
+                      dashboards. I can deliver exactly what you need including all chart components
+                      and responsive layout...
                     </p>
                   </div>
                   {/* Analyze button */}
                   <button className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl text-white text-xs font-black flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30">
                     <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                      <path
+                        fillRule="evenodd"
+                        d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                     Analyze with FreelanceIQ
                   </button>
@@ -455,8 +628,12 @@ function HeroSection() {
                 {/* Right: analysis result panel */}
                 <div className="lg:col-span-2 p-6 bg-indigo-950/30">
                   <div className="flex items-center justify-between mb-4">
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Analysis Result</p>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-bold border border-emerald-500/20">Ready</span>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                      Analysis Result
+                    </p>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-bold border border-emerald-500/20">
+                      Ready
+                    </span>
                   </div>
                   <div className="flex items-center justify-center mb-4">
                     <ScoreGauge score={84} size={100} />
@@ -474,7 +651,10 @@ function HeroSection() {
                           <span className="text-slate-300 font-bold">{item.score}</span>
                         </div>
                         <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
-                          <div className={`h-full ${item.color} rounded-full`} style={{ width: `${item.score}%` }} />
+                          <div
+                            className={`h-full ${item.color} rounded-full`}
+                            style={{ width: `${item.score}%` }}
+                          />
                         </div>
                       </div>
                     ))}
@@ -492,7 +672,11 @@ function HeroSection() {
             <div className="absolute -top-5 -right-5 hidden lg:flex items-center gap-2.5 bg-white rounded-2xl shadow-2xl px-4 py-2.5 animate-float border border-slate-100">
               <div className="w-8 h-8 bg-emerald-100 rounded-xl flex items-center justify-center">
                 <svg className="w-4 h-4 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
+                  <path
+                    fillRule="evenodd"
+                    d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </div>
               <div>
@@ -525,9 +709,15 @@ function StatsBar() {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) { setActive(true); observer.disconnect(); }
-    }, { threshold: 0.3 });
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setActive(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 },
+    );
     observer.observe(el);
     return () => observer.disconnect();
   }, [ref]);
@@ -537,12 +727,17 @@ function StatsBar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Platform badges */}
         <div className="flex flex-wrap items-center justify-center gap-4 mb-12 reveal">
-          <p className="text-slate-500 text-xs font-semibold uppercase tracking-widest w-full text-center mb-2">Optimised for</p>
+          <p className="text-slate-500 text-xs font-semibold uppercase tracking-widest w-full text-center mb-2">
+            Optimised for
+          </p>
           {[
             { name: 'Upwork', color: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' },
             { name: 'Fiverr', color: 'bg-green-500/10 border-green-500/20 text-green-400' },
           ].map((p) => (
-            <div key={p.name} className={`px-5 py-2.5 rounded-xl border ${p.color} text-sm font-bold`}>
+            <div
+              key={p.name}
+              className={`px-5 py-2.5 rounded-xl border ${p.color} text-sm font-bold`}
+            >
               {p.name}
             </div>
           ))}
@@ -551,9 +746,17 @@ function StatsBar() {
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center reveal-stagger">
           {[
-            { value: `${(freelancers / 1000).toFixed(1)}k+`, label: 'Freelancers using FreelanceIQ', suffix: '' },
+            {
+              value: `${(freelancers / 1000).toFixed(1)}k+`,
+              label: 'Freelancers using FreelanceIQ',
+              suffix: '',
+            },
             { value: `${winRate}%`, label: 'Average win rate improvement', suffix: '' },
-            { value: `${(proposals / 1000000).toFixed(1)}M+`, label: 'Proposals analyzed to date', suffix: '' },
+            {
+              value: `${(proposals / 1000000).toFixed(1)}M+`,
+              label: 'Proposals analyzed to date',
+              suffix: '',
+            },
           ].map((stat) => (
             <div key={stat.label} className="reveal">
               <p className="text-4xl font-black text-white mb-1">{stat.value}</p>
@@ -577,8 +780,18 @@ function HowItWorksSection() {
       title: 'Open a Job & Click Analyze',
       desc: 'Browse Upwork or Fiverr as normal. When you find a job you want to bid on, click the FreelanceIQ browser extension icon. It automatically reads the job description and your draft proposal — no copying or pasting needed.',
       icon: (
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M14.25 6H12a2.25 2.25 0 00-2.25 2.25v12a2.25 2.25 0 002.25 2.25h8.25A2.25 2.25 0 0022.5 20.25v-7.5a2.25 2.25 0 00-2.25-2.25H18M14.25 6V4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V6M14.25 6h3.75M6.75 15.75L9 18l3.75-3.75" />
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M14.25 6H12a2.25 2.25 0 00-2.25 2.25v12a2.25 2.25 0 002.25 2.25h8.25A2.25 2.25 0 0022.5 20.25v-7.5a2.25 2.25 0 00-2.25-2.25H18M14.25 6V4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V6M14.25 6h3.75M6.75 15.75L9 18l3.75-3.75"
+          />
         </svg>
       ),
       gradient: 'from-blue-500 to-indigo-600',
@@ -588,8 +801,18 @@ function HowItWorksSection() {
       title: 'AI Scores Your Bid',
       desc: 'Our AI reads your proposal, compares it to the job requirements, checks your rate against Upwork/Fiverr market data, and generates a 0–100 score in seconds.',
       icon: (
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 001.357 2.059l.183.075a24.3 24.3 0 003.254.875m-7.25-8.709A24.298 24.298 0 0112 3m9.75.104v5.714a2.25 2.25 0 01-.659 1.591L14.25 14.5" />
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 001.357 2.059l.183.075a24.3 24.3 0 003.254.875m-7.25-8.709A24.298 24.298 0 0112 3m9.75.104v5.714a2.25 2.25 0 01-.659 1.591L14.25 14.5"
+          />
         </svg>
       ),
       gradient: 'from-indigo-500 to-purple-600',
@@ -599,8 +822,18 @@ function HowItWorksSection() {
       title: 'Fix It & Win',
       desc: "Get a clear breakdown of what's weak — relevance, rate, clarity, CTA — with specific rewrites you can apply to your proposal instantly before sending.",
       icon: (
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
+          />
         </svg>
       ),
       gradient: 'from-purple-500 to-pink-600',
@@ -627,7 +860,9 @@ function HowItWorksSection() {
             >
               {/* Step number */}
               <div className="flex items-center gap-4 mb-6">
-                <div className={`w-12 h-12 bg-gradient-to-br ${step.gradient} rounded-2xl flex items-center justify-center text-white shadow-lg`}>
+                <div
+                  className={`w-12 h-12 bg-gradient-to-br ${step.gradient} rounded-2xl flex items-center justify-center text-white shadow-lg`}
+                >
                   {step.icon}
                 </div>
                 <span className="text-5xl font-black text-slate-100 select-none">{step.num}</span>
@@ -654,8 +889,18 @@ function FeaturesSection() {
       desc: 'Every proposal gets an objective score based on relevance, clarity, pricing, and persuasiveness. Know your odds before you submit.',
       gradient: 'from-blue-500 to-indigo-600',
       icon: (
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
+          />
         </svg>
       ),
     },
@@ -665,8 +910,18 @@ function FeaturesSection() {
       desc: 'See how your proposed rate compares to real market data for your skill on Upwork and Fiverr. Stop leaving money on the table or pricing yourself out.',
       gradient: 'from-emerald-500 to-teal-600',
       icon: (
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75" />
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75"
+          />
         </svg>
       ),
     },
@@ -676,8 +931,18 @@ function FeaturesSection() {
       desc: 'Not happy with your score? Get an AI-rewritten version of your proposal that keeps your voice and fixes the weak spots identified in the analysis.',
       gradient: 'from-violet-500 to-purple-600',
       icon: (
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"
+          />
         </svg>
       ),
     },
@@ -687,8 +952,18 @@ function FeaturesSection() {
       desc: 'See exactly which parts of your proposal are strong or weak: job relevance, opening hook, rate justification, CTA, and more — all scored individually.',
       gradient: 'from-amber-500 to-orange-600',
       icon: (
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" />
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"
+          />
         </svg>
       ),
     },
@@ -698,8 +973,18 @@ function FeaturesSection() {
       desc: 'Track all your past proposals in one place. See how your average score improves over time and which job types you win most.',
       gradient: 'from-sky-500 to-blue-600',
       icon: (
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z" />
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z"
+          />
         </svg>
       ),
     },
@@ -709,8 +994,18 @@ function FeaturesSection() {
       desc: 'Based on your score and market conditions, FreelanceIQ estimates the likelihood a client will respond to your proposal — so you can decide when to bid.',
       gradient: 'from-pink-500 to-rose-600',
       icon: (
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z" />
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z"
+          />
         </svg>
       ),
     },
@@ -735,11 +1030,15 @@ function FeaturesSection() {
               style={{ transitionDelay: `${i * 70}ms` }}
             >
               <div className="flex items-start gap-4 mb-4">
-                <div className={`w-10 h-10 bg-gradient-to-br ${f.gradient} rounded-xl flex items-center justify-center text-white shadow-sm shrink-0`}>
+                <div
+                  className={`w-10 h-10 bg-gradient-to-br ${f.gradient} rounded-xl flex items-center justify-center text-white shadow-sm shrink-0`}
+                >
                   {f.icon}
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{f.tag}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                    {f.tag}
+                  </span>
                   <h3 className="text-base font-bold text-slate-900 mt-0.5">{f.title}</h3>
                 </div>
               </div>
@@ -769,19 +1068,44 @@ function DemoSection() {
               See exactly what your score means — and how to improve it
             </h2>
             <p className="text-slate-500 text-base leading-relaxed mb-8">
-              After you paste a proposal, FreelanceIQ breaks it down across multiple quality dimensions. Each dimension gets an individual score, and you get specific, actionable feedback — not vague advice.
+              After you paste a proposal, FreelanceIQ breaks it down across multiple quality
+              dimensions. Each dimension gets an individual score, and you get specific, actionable
+              feedback — not vague advice.
             </p>
             <ul className="space-y-4">
               {[
-                { title: 'Relevance score', desc: 'How well does your proposal address the specific job post?' },
-                { title: 'Rate positioning', desc: 'Is your bid competitive for this skill on Upwork or Fiverr?' },
-                { title: 'Proposal clarity', desc: 'Is your writing clear, concise, and easy to read?' },
-                { title: 'CTA effectiveness', desc: 'Does your proposal end with a strong invite to reply?' },
+                {
+                  title: 'Relevance score',
+                  desc: 'How well does your proposal address the specific job post?',
+                },
+                {
+                  title: 'Rate positioning',
+                  desc: 'Is your bid competitive for this skill on Upwork or Fiverr?',
+                },
+                {
+                  title: 'Proposal clarity',
+                  desc: 'Is your writing clear, concise, and easy to read?',
+                },
+                {
+                  title: 'CTA effectiveness',
+                  desc: 'Does your proposal end with a strong invite to reply?',
+                },
               ].map((item, idx) => (
-                <li key={item.title} className="reveal flex items-start gap-3" style={{ transitionDelay: `${idx * 90 + 100}ms` }}>
+                <li
+                  key={item.title}
+                  className="reveal flex items-start gap-3"
+                  style={{ transitionDelay: `${idx * 90 + 100}ms` }}
+                >
                   <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
                     <svg className="w-3 h-3 text-blue-600" viewBox="0 0 10 10" fill="currentColor">
-                      <path d="M8.5 2.5L4 7 1.5 4.5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path
+                        d="M8.5 2.5L4 7 1.5 4.5"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        fill="none"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
                     </svg>
                   </div>
                   <div>
@@ -820,19 +1144,28 @@ function DemoSection() {
                       <ScoreGauge score={76} size={90} />
                       <div>
                         <p className="text-white font-bold text-lg">Score: 76 / 100</p>
-                        <p className="text-slate-400 text-sm">Good — a few improvements could push this above 85</p>
-                        <span className="inline-block mt-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-semibold">Fiverr Gig</span>
+                        <p className="text-slate-400 text-sm">
+                          Good — a few improvements could push this above 85
+                        </p>
+                        <span className="inline-block mt-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-semibold">
+                          Fiverr Gig
+                        </span>
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-3">Quick summary</p>
+                      <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-3">
+                        Quick summary
+                      </p>
                       {[
                         { label: 'Strong opening hook', positive: true },
                         { label: 'Relevant to buyer request', positive: true },
                         { label: 'Rate slightly above Fiverr median', positive: false },
                         { label: 'Weak closing — no clear CTA', positive: false },
                       ].map((item) => (
-                        <div key={item.label} className={`flex items-center gap-2 text-sm px-3 py-2 rounded-lg ${item.positive ? 'bg-emerald-500/10 text-emerald-300' : 'bg-red-500/10 text-red-300'}`}>
+                        <div
+                          key={item.label}
+                          className={`flex items-center gap-2 text-sm px-3 py-2 rounded-lg ${item.positive ? 'bg-emerald-500/10 text-emerald-300' : 'bg-red-500/10 text-red-300'}`}
+                        >
                           <span>{item.positive ? '✓' : '✗'}</span>
                           {item.label}
                         </div>
@@ -856,7 +1189,10 @@ function DemoSection() {
                           <span className="text-white font-semibold">{item.score}</span>
                         </div>
                         <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                          <div className={`h-full ${item.color} rounded-full`} style={{ width: `${item.score}%` }} />
+                          <div
+                            className={`h-full ${item.color} rounded-full`}
+                            style={{ width: `${item.score}%` }}
+                          />
                         </div>
                       </div>
                     ))}
@@ -866,13 +1202,34 @@ function DemoSection() {
                 {activeTab === 'actions' && (
                   <div className="space-y-3">
                     {[
-                      { action: 'Rewrite your closing paragraph with a direct question', impact: 'High', color: 'text-red-400 bg-red-500/10' },
-                      { action: 'Lower your rate by $5 to match Fiverr median for this category', impact: 'Medium', color: 'text-amber-400 bg-amber-500/10' },
-                      { action: 'Add one specific deliverable to your proposal', impact: 'Medium', color: 'text-amber-400 bg-amber-500/10' },
-                      { action: 'Your opening is strong — keep it', impact: 'Positive', color: 'text-emerald-400 bg-emerald-500/10' },
+                      {
+                        action: 'Rewrite your closing paragraph with a direct question',
+                        impact: 'High',
+                        color: 'text-red-400 bg-red-500/10',
+                      },
+                      {
+                        action: 'Lower your rate by $5 to match Fiverr median for this category',
+                        impact: 'Medium',
+                        color: 'text-amber-400 bg-amber-500/10',
+                      },
+                      {
+                        action: 'Add one specific deliverable to your proposal',
+                        impact: 'Medium',
+                        color: 'text-amber-400 bg-amber-500/10',
+                      },
+                      {
+                        action: 'Your opening is strong — keep it',
+                        impact: 'Positive',
+                        color: 'text-emerald-400 bg-emerald-500/10',
+                      },
                     ].map((item) => (
-                      <div key={item.action} className={`flex items-start gap-3 p-3 rounded-xl ${item.color}`}>
-                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-white/10 shrink-0 mt-0.5">{item.impact}</span>
+                      <div
+                        key={item.action}
+                        className={`flex items-start gap-3 p-3 rounded-xl ${item.color}`}
+                      >
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-white/10 shrink-0 mt-0.5">
+                          {item.impact}
+                        </span>
                         <p className="text-xs leading-relaxed">{item.action}</p>
                       </div>
                     ))}
@@ -960,16 +1317,24 @@ function PricingSection() {
 
         {/* Toggle */}
         <div className="flex items-center justify-center gap-3 mb-12 reveal">
-          <span className={`text-sm font-semibold ${!annual ? 'text-slate-900' : 'text-slate-400'}`}>Monthly</span>
+          <span
+            className={`text-sm font-semibold ${!annual ? 'text-slate-900' : 'text-slate-400'}`}
+          >
+            Monthly
+          </span>
           <button
             onClick={() => setAnnual(!annual)}
             className={`relative w-12 h-6 rounded-full transition-colors ${annual ? 'bg-blue-600' : 'bg-slate-300'}`}
           >
-            <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${annual ? 'translate-x-6.5' : 'translate-x-0.5'}`} />
+            <span
+              className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${annual ? 'translate-x-6.5' : 'translate-x-0.5'}`}
+            />
           </button>
           <span className={`text-sm font-semibold ${annual ? 'text-slate-900' : 'text-slate-400'}`}>
             Annual
-            <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">Save 20%</span>
+            <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">
+              Save 20%
+            </span>
           </span>
         </div>
 
@@ -993,22 +1358,36 @@ function PricingSection() {
               )}
 
               <div className="mb-6">
-                <p className={`text-sm font-bold uppercase tracking-widest mb-1 ${plan.popular ? 'text-blue-400' : 'text-slate-500'}`}>{plan.name}</p>
+                <p
+                  className={`text-sm font-bold uppercase tracking-widest mb-1 ${plan.popular ? 'text-blue-400' : 'text-slate-500'}`}
+                >
+                  {plan.name}
+                </p>
                 <div className="flex items-end gap-1 mb-2">
-                  <span className={`text-5xl font-black ${plan.popular ? 'text-white' : 'text-slate-900'}`}>
+                  <span
+                    className={`text-5xl font-black ${plan.popular ? 'text-white' : 'text-slate-900'}`}
+                  >
                     ${annual ? plan.price.annual : plan.price.monthly}
                   </span>
                   {plan.price.monthly > 0 && (
-                    <span className={`text-sm pb-2 ${plan.popular ? 'text-slate-400' : 'text-slate-400'}`}>/mo</span>
+                    <span
+                      className={`text-sm pb-2 ${plan.popular ? 'text-slate-400' : 'text-slate-400'}`}
+                    >
+                      /mo
+                    </span>
                   )}
                 </div>
-                <p className={`text-sm ${plan.popular ? 'text-slate-400' : 'text-slate-500'}`}>{plan.desc}</p>
+                <p className={`text-sm ${plan.popular ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {plan.desc}
+                </p>
               </div>
 
               <ul className="space-y-3 mb-8 flex-1">
                 {plan.features.map((f) => (
                   <CheckItem key={f.text} available={f.available}>
-                    <span className={plan.popular && !f.available ? 'text-slate-600' : ''}>{f.text}</span>
+                    <span className={plan.popular && !f.available ? 'text-slate-600' : ''}>
+                      {f.text}
+                    </span>
                   </CheckItem>
                 ))}
               </ul>
@@ -1037,7 +1416,8 @@ function TestimonialsSection() {
 
   const testimonials = [
     {
-      quote: "I was getting maybe 1 response in 10 bids on Upwork. After using FreelanceIQ to check my proposals, I rewrote my closing section and my response rate jumped in the first week.",
+      quote:
+        'I was getting maybe 1 response in 10 bids on Upwork. After using FreelanceIQ to check my proposals, I rewrote my closing section and my response rate jumped in the first week.',
       name: 'Sarah K.',
       role: 'React Developer',
       platform: 'Upwork',
@@ -1045,7 +1425,8 @@ function TestimonialsSection() {
       gradient: 'from-blue-500 to-indigo-600',
     },
     {
-      quote: "The rate benchmark feature alone is worth it. I realised I was charging $10/hr below median for my Fiverr gig category. Bumped my price and still kept winning orders.",
+      quote:
+        'The rate benchmark feature alone is worth it. I realised I was charging $10/hr below median for my Fiverr gig category. Bumped my price and still kept winning orders.',
       name: 'Marcus T.',
       role: 'UI/UX Designer',
       platform: 'Fiverr',
@@ -1053,7 +1434,8 @@ function TestimonialsSection() {
       gradient: 'from-emerald-500 to-teal-600',
     },
     {
-      quote: "FreelanceIQ pointed out my proposals were too generic — I wasn't referencing the client's actual problem. Fixed that one thing and my Upwork win rate noticeably improved.",
+      quote:
+        "FreelanceIQ pointed out my proposals were too generic — I wasn't referencing the client's actual problem. Fixed that one thing and my Upwork win rate noticeably improved.",
       name: 'Priya M.',
       role: 'Content Writer',
       platform: 'Upwork',
@@ -1083,7 +1465,12 @@ function TestimonialsSection() {
               {/* Stars */}
               <div className="flex gap-1 mb-5">
                 {Array.from({ length: 5 }).map((_, j) => (
-                  <svg key={j} className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                  <svg
+                    key={j}
+                    className="w-4 h-4 text-amber-400"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                   </svg>
                 ))}
@@ -1092,16 +1479,24 @@ function TestimonialsSection() {
               <p className="text-slate-700 text-sm leading-relaxed mb-6">"{t.quote}"</p>
 
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 bg-gradient-to-br ${t.gradient} rounded-xl flex items-center justify-center text-white text-xs font-bold shrink-0`}>
+                <div
+                  className={`w-10 h-10 bg-gradient-to-br ${t.gradient} rounded-xl flex items-center justify-center text-white text-xs font-bold shrink-0`}
+                >
                   {t.initials}
                 </div>
                 <div>
                   <p className="text-sm font-bold text-slate-900">{t.name}</p>
                   <p className="text-xs text-slate-500">{t.role}</p>
                 </div>
-                <span className={`ml-auto px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                  t.platform === 'Upwork' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-green-50 text-green-700 border border-green-200'
-                }`}>{t.platform}</span>
+                <span
+                  className={`ml-auto px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    t.platform === 'Upwork'
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      : 'bg-green-50 text-green-700 border border-green-200'
+                  }`}
+                >
+                  {t.platform}
+                </span>
               </div>
             </div>
           ))}
@@ -1148,10 +1543,7 @@ function FAQSection() {
     <section id="faq" ref={ref} className="py-24 bg-slate-50">
       <div className="max-w-3xl mx-auto px-4 sm:px-6">
         <div className="reveal mb-12">
-          <SectionHeader
-            badge="FAQ"
-            title="Questions? We have answers."
-          />
+          <SectionHeader badge="FAQ" title="Questions? We have answers." />
         </div>
 
         <div className="space-y-3 reveal-stagger">
@@ -1168,14 +1560,20 @@ function FAQSection() {
                 <span className="text-sm font-semibold text-slate-900 pr-4">{faq.q}</span>
                 <svg
                   className={`w-5 h-5 text-slate-400 shrink-0 transition-transform ${openIdx === i ? 'rotate-45' : ''}`}
-                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
               </button>
               <div
                 className="overflow-hidden transition-all duration-300 ease-in-out"
-                style={{ maxHeight: openIdx === i ? '300px' : '0px', opacity: openIdx === i ? 1 : 0 }}
+                style={{
+                  maxHeight: openIdx === i ? '300px' : '0px',
+                  opacity: openIdx === i ? 1 : 0,
+                }}
               >
                 <div className="px-6 pb-5">
                   <p className="text-sm text-slate-500 leading-relaxed">{faq.a}</p>
@@ -1199,14 +1597,17 @@ function CtaSection() {
         <div className="absolute top-1/4 -left-32 w-80 h-80 bg-blue-600/15 rounded-full blur-3xl animate-float" />
         <div className="absolute bottom-1/4 -right-32 w-80 h-80 bg-indigo-600/15 rounded-full blur-3xl animate-float-slow" />
       </div>
-      <div className="relative max-w-3xl mx-auto px-4 sm:px-6 text-center">
+      <div className="relative max-w-5xl mx-auto px-4 sm:px-6 text-center">
         <div className="reveal">
           <SectionBadge dark>Free to start</SectionBadge>
-          <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight mt-6 mb-4">
-            Stop guessing.<br />Start winning bids.
+          <h2 className="text-4xl sm:text-6xl font-black text-white tracking-tight mt-6 mb-4">
+            Stop guessing.
+            <br />
+            Start winning bids.
           </h2>
           <p className="text-slate-300 text-lg mb-10 leading-relaxed">
-            Join freelancers who use FreelanceIQ to score every proposal on Upwork and Fiverr before hitting send.
+            Join freelancers who use FreelanceIQ to score every proposal on Upwork and Fiverr before
+            hitting send.
           </p>
         </div>
         <div className="reveal reveal-delay-2 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -1216,13 +1617,17 @@ function CtaSection() {
             </Button>
           </Link>
           <button
-            onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
+            onClick={() =>
+              document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })
+            }
             className="px-6 py-3 rounded-xl border border-white/20 text-white text-sm font-semibold hover:bg-white/10 transition-all"
           >
             View Pricing
           </button>
         </div>
-        <p className="reveal reveal-delay-3 text-xs text-slate-400 mt-6 font-medium">No credit card required · Free forever plan available</p>
+        <p className="reveal reveal-delay-3 text-xs text-slate-400 mt-6 font-medium">
+          No credit card required · Free forever plan available
+        </p>
       </div>
     </section>
   );
@@ -1235,27 +1640,42 @@ function Footer() {
 
   return (
     <footer className="bg-slate-900 border-t border-indigo-500/10 py-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
           {/* Brand */}
           <div className="lg:col-span-2">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
                 <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                  <path
+                    fillRule="evenodd"
+                    d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </div>
-              <span className="font-black text-white text-lg">Freelance<span className="text-blue-400">IQ</span></span>
+              <span className="font-black text-white text-lg">
+                Freelance<span className="text-blue-400">IQ</span>
+              </span>
             </div>
             <p className="text-slate-400 text-sm leading-relaxed max-w-xs mb-6">
-              AI-powered proposal scoring for Upwork and Fiverr freelancers. Score your bid before you send it.
+              AI-powered proposal scoring for Upwork and Fiverr freelancers. Score your bid before
+              you send it.
             </p>
             <div className="flex gap-3">
               {['twitter', 'linkedin'].map((social) => (
-                <a key={social} href="#" className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all">
+                <a
+                  key={social}
+                  href="#"
+                  className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all"
+                >
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                    {social === 'twitter' && <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />}
-                    {social === 'linkedin' && <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />}
+                    {social === 'twitter' && (
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    )}
+                    {social === 'linkedin' && (
+                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                    )}
                   </svg>
                 </a>
               ))}
@@ -1264,7 +1684,9 @@ function Footer() {
 
           {/* Product */}
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">Product</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">
+              Product
+            </p>
             <ul className="space-y-3">
               {[
                 { label: 'Features', action: () => scrollTo('features') },
@@ -1273,7 +1695,10 @@ function Footer() {
                 { label: 'FAQ', action: () => scrollTo('faq') },
               ].map((item) => (
                 <li key={item.label}>
-                  <button onClick={item.action} className="text-sm text-slate-400 hover:text-white transition-colors">
+                  <button
+                    onClick={item.action}
+                    className="text-sm text-slate-400 hover:text-white transition-colors"
+                  >
                     {item.label}
                   </button>
                 </li>
@@ -1283,7 +1708,9 @@ function Footer() {
 
           {/* Account */}
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">Account</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">
+              Account
+            </p>
             <ul className="space-y-3">
               {[
                 { label: 'Sign In', to: '/login' },
@@ -1292,7 +1719,10 @@ function Footer() {
                 { label: 'Terms of Service', to: '#' },
               ].map((item) => (
                 <li key={item.label}>
-                  <Link to={item.to} className="text-sm text-slate-400 hover:text-white transition-colors">
+                  <Link
+                    to={item.to}
+                    className="text-sm text-slate-400 hover:text-white transition-colors"
+                  >
                     {item.label}
                   </Link>
                 </li>
@@ -1302,7 +1732,9 @@ function Footer() {
         </div>
 
         <div className="border-t border-white/5 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-slate-500 text-xs">© {new Date().getFullYear()} FreelanceIQ. All rights reserved.</p>
+          <p className="text-slate-500 text-xs">
+            © {new Date().getFullYear()} FreelanceIQ. All rights reserved.
+          </p>
           <p className="text-slate-600 text-xs">Built for Upwork &amp; Fiverr freelancers</p>
         </div>
       </div>
