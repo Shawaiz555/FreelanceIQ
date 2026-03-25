@@ -998,7 +998,7 @@ async function startAnalysis() {
     type: 'ANALYSIS_RESULT',
     payload: result.data.data,
   });
-  sendToSidebar({ type: 'SET_STATE', payload: { state: 'result' } });
+  // State is set by sidebar's renderResult / renderMatchResult based on analysis_type
 }
 
 // ─── SPA navigation handling ──────────────────────────────────────────────────
