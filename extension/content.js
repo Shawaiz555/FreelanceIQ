@@ -941,7 +941,7 @@ window.addEventListener('popstate', onUrlChange);
 function isFreelanceIQApp() {
   var host = window.location.hostname;
   var port = window.location.port;
-  return host === 'freelanceiq.app' || (host === 'localhost' && port === '5173');
+  return host === 'freelance-iq.vercel.app' || (host === 'localhost' && port === '5173');
 }
 
 function pingFreelanceIQApp() {

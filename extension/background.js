@@ -8,18 +8,17 @@
  * - Periodic token refresh alarm to keep the token fresh
  */
 
-// Switch to production URL when deployed: 'https://freelanceiq.app/api'
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = 'https://freelance-iq.vercel.app/api';
 
 // ─── FreelanceIQ app tab helpers ─────────────────────────────────────────────
 
 /**
- * Find an open FreelanceIQ web app tab (localhost:5173 or freelanceiq.app).
+ * Find an open FreelanceIQ web app tab (localhost:5173 or freelance-iq.vercel.app).
  * Returns the tab or null.
  */
 async function getFiqTab() {
   const tabs = await chrome.tabs.query({
-    url: ['http://localhost:5173/*', 'https://freelanceiq.app/*'],
+    url: ['http://localhost:5173/*', 'https://freelance-iq.vercel.app/*'],
   });
   return tabs.length > 0 ? tabs[0] : null;
 }

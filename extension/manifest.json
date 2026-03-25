@@ -19,7 +19,7 @@
     "https://www.freelancer.com/*",
     "https://freelancer.com/*",
     "http://localhost:5173/*",
-    "https://freelanceiq.app/*"
+    "https://freelance-iq.vercel.app/*"
   ],
 
   "background": {
@@ -43,7 +43,7 @@
     {
       "matches": [
         "http://localhost:5173/*",
-        "https://freelanceiq.app/*"
+        "https://freelance-iq.vercel.app/*"
       ],
       "js": ["content.js"],
       "run_at": "document_idle"
