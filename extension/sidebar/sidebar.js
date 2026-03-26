@@ -218,14 +218,10 @@ function renderMatchResult(analysis) {
   // Strengths
   renderFlags('match-strengths', match_result?.strengths || [], true);
 
-  // Application summary
-  const summary = proposal?.cover_letter || match_result?.application_summary || '';
-  if (summary) {
-    $('match-summary-card').style.display = 'block';
-    $('match-summary-textarea').value = summary;
-    updateWordCount(summary);
-    // Reuse word count element for match
-    $('match-word-count').textContent = `${summary.trim().split(/\s+/).filter(Boolean).length} words`;
+  // Tailored CV card
+  if (analysis.generated_cv && analysis.generated_cv.length > 50) {
+    $('match-cv-card').style.display = 'block';
+    $('match-cv-preview').textContent = 'CV rewritten in your original format, tailored for this job. Download to review and paste into your original file.';
   }
 
   showState('result-match');
@@ -491,37 +487,21 @@ $('retry-btn').addEventListener('click', () => {
 
 // ─── Job-match (LinkedIn) button handlers ─────────────────────────────────────
 
-// Copy application summary
-$('match-copy-btn').addEventListener('click', async () => {
-  const text = $('match-summary-textarea').value;
-  try {
-    await navigator.clipboard.writeText(text);
-    const btn = $('match-copy-btn');
-    const original = btn.innerHTML;
-    btn.textContent = '✓ Copied!';
-    btn.classList.add('copied-flash');
-    setTimeout(() => { btn.innerHTML = original; btn.classList.remove('copied-flash'); }, 1800);
-  } catch {
-    $('match-summary-textarea').select();
-  }
-});
+// Download tailored CV — plain text preserving the user's original CV structure
+$('match-cv-download-btn').addEventListener('click', () => {
+  if (!currentAnalysis?.generated_cv) return;
+  const jobTitle = currentAnalysis.job?.title || 'job';
+  const safeTitle = jobTitle.replace(/[^a-z0-9\s-]/gi, '').replace(/\s+/g, '-').toLowerCase().slice(0, 60);
 
-// Download application summary
-$('match-download-btn').addEventListener('click', () => {
-  const text = $('match-summary-textarea').value;
-  const blob = new Blob([text], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
+  const blob = new Blob([currentAnalysis.generated_cv], { type: 'text/plain' });
+  const blobUrl = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url;
-  a.download = `application-summary-${currentAnalysis?._id || Date.now()}.txt`;
+  a.href = blobUrl;
+  a.download = `cv-${safeTitle || 'tailored'}.txt`;
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
-});
-
-// Live word count for match summary
-$('match-summary-textarea').addEventListener('input', (e) => {
-  const words = e.target.value.trim().split(/\s+/).filter(Boolean).length;
-  $('match-word-count').textContent = `${words} words`;
+  document.body.removeChild(a);
+  URL.revokeObjectURL(blobUrl);
 });
 
 // Re-analyse match

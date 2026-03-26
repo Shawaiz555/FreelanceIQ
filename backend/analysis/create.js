@@ -1,7 +1,7 @@
 const connectDB = require('../lib/db');
 const Analysis = require('../lib/models/Analysis');
 const User = require('../lib/models/User');
-const { classifyJob, scoreBid, generateProposal, matchJobToProfile } = require('../lib/services/openai.service');
+const { classifyJob, scoreBid, generateProposal, matchJobToProfile, generateTailoredCV } = require('../lib/services/openai.service');
 const { enrichJobWithPricing } = require('../lib/services/pricing.service');
 const { getCached, setCached } = require('../lib/redis');
 const { AppError, withErrorHandler, withAuth, withRateLimit } = require('../lib/withMiddleware');
@@ -47,7 +47,22 @@ async function checkQuota(user) {
 // ─── LinkedIn job-match pipeline ──────────────────────────────────────────────
 
 async function runJobMatchPipeline(jobData, fullUser) {
-  const { data: matchData, tokensUsed } = await matchJobToProfile(jobData, fullUser.profile);
+  // Run match analysis and tailored CV generation in parallel.
+  // CV generation is non-fatal — a failure there must not block the match result.
+  const [matchResult, cvResult] = await Promise.allSettled([
+    matchJobToProfile(jobData, fullUser.profile),
+    generateTailoredCV(jobData, { ...fullUser.profile, name: fullUser.name }),
+  ]);
+
+  if (matchResult.status === 'rejected') throw matchResult.reason;
+
+  const { data: matchData, tokensUsed: t1 } = matchResult.value;
+  const cvText = cvResult.status === 'fulfilled' ? cvResult.value.data.cv_text : '';
+  const t2 = cvResult.status === 'fulfilled' ? cvResult.value.tokensUsed : 0;
+
+  if (cvResult.status === 'rejected') {
+    console.error('[JobMatch] CV generation failed (non-fatal):', cvResult.reason?.message);
+  }
 
   const savedAnalysis = await Analysis.create({
     user_id: fullUser._id,
@@ -75,14 +90,14 @@ async function runJobMatchPipeline(jobData, fullUser) {
       application_summary: matchData.application_summary,
       recommended_action: matchData.recommended_action,
     },
-    // Store application_summary as cover_letter for easy reuse by the sidebar
     proposal: {
       cover_letter: matchData.application_summary,
       tone_detected: 'professional',
       template_used: 'job-match',
       word_count: matchData.application_summary.trim().split(/\s+/).length,
     },
-    ai_tokens_used: tokensUsed,
+    generated_cv: cvText,
+    ai_tokens_used: t1 + t2,
   });
 
   return savedAnalysis;

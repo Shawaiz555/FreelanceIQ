@@ -272,6 +272,75 @@ ${cvSection}`,
   return chatJSON(messages, MatchSchema);
 }
 
+// ─── generateTailoredCV ───────────────────────────────────────────────────────
+//
+// Used for LinkedIn jobs: rewrites the candidate's CV text to maximise relevance
+// for the target job, preserving the EXACT structure, section names, ordering,
+// and formatting of the original CV — only content is updated.
+
+const TailoredCVSchema = z.object({
+  cv_text: z.string().min(100),
+});
+
+async function generateTailoredCV(jobData, userProfile) {
+  const { title: jobTitle, description, company, skills_required, seniority_level } = jobData;
+
+  const hasCv = !!(userProfile.cv_text && userProfile.cv_text.trim().length > 50);
+
+  const cvSource = hasCv
+    ? userProfile.cv_text.slice(0, 8000)
+    : [
+        `${userProfile.name || 'Candidate'}`,
+        userProfile.title ? userProfile.title : '',
+        userProfile.bio ? `\nSUMMARY\n${userProfile.bio}` : '',
+        (userProfile.skills || []).length
+          ? `\nSKILLS\n${userProfile.skills.join(', ')}` : '',
+        userProfile.experience_years
+          ? `\nEXPERIENCE\n${userProfile.experience_years} years of experience` : '',
+        (userProfile.education || []).length
+          ? `\nEDUCATION\n${userProfile.education.join('\n')}` : '',
+        (userProfile.certifications || []).length
+          ? `\nCERTIFICATIONS\n${userProfile.certifications.join('\n')}` : '',
+      ].filter(Boolean).join('\n');
+
+  const messages = [
+    {
+      role: 'system',
+      content: `You are an expert CV writer. Your task is to rewrite a candidate's CV to maximise their chances for a specific job.
+
+STRICT RULES — follow every one of these:
+1. PRESERVE the exact structure: keep every section heading exactly as written (e.g. if original says "WORK EXPERIENCE" keep that, not "Experience"), keep the same section order, keep the same layout style (bullet points stay bullet points, paragraphs stay paragraphs)
+2. DO NOT add or remove sections
+3. DO NOT fabricate any company names, job titles, dates, degrees, or institutions — only use what exists in the original CV
+4. DO rewrite bullet points and descriptions to emphasise skills and achievements most relevant to the target job
+5. DO update the professional summary/objective (if present) to directly address the target job requirements
+6. DO reorder skill lists so the most relevant skills appear first
+7. Keep all dates, company names, job titles, and qualifications EXACTLY as they appear in the source
+8. Output the full rewritten CV as plain text, using the same whitespace/newline conventions as the original
+
+Return a JSON object with a single field:
+- cv_text: the complete rewritten CV as a plain text string`,
+    },
+    {
+      role: 'user',
+      content: `Target job: ${jobTitle}
+Company: ${company || 'Not specified'}
+Seniority: ${seniority_level || 'Not specified'}
+Required skills: ${(skills_required || []).join(', ') || 'Not listed'}
+
+Job description:
+${description.slice(0, 2000)}
+
+---
+
+ORIGINAL CV (rewrite this — preserve structure, update content):
+${cvSource}`,
+    },
+  ];
+
+  return chatJSON(messages, TailoredCVSchema, 'gpt-4o-mini');
+}
+
 // ─── extractProfileFromCV ─────────────────────────────────────────────────────
 //
 // Parses a CV/resume text and extracts structured profile fields.
@@ -334,4 +403,4 @@ Be conservative — omit a field rather than guess. Do not hallucinate URLs or c
   return chatJSON(messages, CVProfileSchema);
 }
 
-module.exports = { classifyJob, scoreBid, generateProposal, matchJobToProfile, extractProfileFromCV };
+module.exports = { classifyJob, scoreBid, generateProposal, matchJobToProfile, generateTailoredCV, extractProfileFromCV };

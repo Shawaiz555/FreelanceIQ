@@ -65,6 +65,9 @@ const analysisSchema = new mongoose.Schema(
       template_used: { type: String, default: null },
       word_count: { type: Number, default: 0 },
     },
+    // Tailored CV plain text generated for LinkedIn jobs (analysis_type: 'job_match')
+    // Preserves the exact structure/layout of the user's original uploaded CV
+    generated_cv: { type: String, default: '' },
     outcome: {
       did_bid: { type: Boolean, default: false },
       did_win: { type: Boolean, default: null },
