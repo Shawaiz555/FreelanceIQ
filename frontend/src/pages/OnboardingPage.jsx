@@ -78,6 +78,13 @@ export default function OnboardingPage() {
   const [education, setEducation] = useState([]);
   const [certifications, setCertifications] = useState([]);
 
+  const ensureHttps = (field) => (e) => {
+    const trimmed = e.target.value.trim();
+    if (trimmed && !/^https?:\/\//i.test(trimmed)) {
+      setForm((p) => ({ ...p, [field]: 'https://' + trimmed }));
+    }
+  };
+
   const handleFileUpload = async (file) => {
     if (!file) return;
     setUploading(true);
@@ -349,6 +356,7 @@ export default function OnboardingPage() {
                       type="url"
                       value={form.linkedin_url}
                       onChange={(e) => setForm((p) => ({ ...p, linkedin_url: e.target.value }))}
+                      onBlur={ensureHttps('linkedin_url')}
                       placeholder="https://linkedin.com/in/yourname"
                       className="w-full px-4 py-3 text-sm border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 hover:bg-white focus:bg-white transition-all text-slate-900"
                     />
@@ -360,6 +368,7 @@ export default function OnboardingPage() {
                         type="url"
                         value={form.github_url}
                         onChange={(e) => setForm((p) => ({ ...p, github_url: e.target.value }))}
+                        onBlur={ensureHttps('github_url')}
                         placeholder="https://github.com/yourname"
                         className="w-full px-4 py-3 text-sm border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 hover:bg-white focus:bg-white transition-all text-slate-900"
                       />
@@ -370,6 +379,7 @@ export default function OnboardingPage() {
                         type="url"
                         value={form.website_url}
                         onChange={(e) => setForm((p) => ({ ...p, website_url: e.target.value }))}
+                        onBlur={ensureHttps('website_url')}
                         placeholder="https://yoursite.com"
                         className="w-full px-4 py-3 text-sm border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 hover:bg-white focus:bg-white transition-all text-slate-900"
                       />

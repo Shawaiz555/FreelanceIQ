@@ -25,6 +25,7 @@ import AnalysisHistoryPage from './pages/AnalysisHistoryPage';
 import BillingPage from './pages/BillingPage';
 import SettingsPage from './pages/SettingsPage';
 import ProfilePage from './pages/ProfilePage';
+import ManualAnalysisPage from './pages/ManualAnalysisPage';
 
 function AppInner() {
   useExtensionAuth();
@@ -52,6 +53,7 @@ export default function App() {
           <Route path="/billing" element={<BillingPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/analyze" element={<ManualAnalysisPage />} />
         </Route>
 
         {/* 404 */}

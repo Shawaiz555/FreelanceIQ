@@ -6,13 +6,12 @@ import { SkeletonCard } from '../components/ui/Skeleton';
 import { addNotification } from '../store/slices/uiSlice';
 import { analysisApi, proposalsApi } from '../services/api';
 
-// ─── Flag list ───────────────────────────────────────────────────────────────
+// ─── Shared helpers ───────────────────────────────────────────────────────────
 
 function FlagList({ flags, variant }) {
   const isGreen = variant === 'green';
-  if (flags.length === 0) {
+  if (!flags || flags.length === 0)
     return <p className="text-sm text-slate-500 italic">None identified</p>;
-  }
   return (
     <ul className="space-y-2.5">
       {flags.map((flag) => (
@@ -42,23 +41,24 @@ function FlagList({ flags, variant }) {
               />
             </svg>
           )}
-          <span className={isGreen ? 'text-slate-700' : 'text-slate-700'}>{flag}</span>
+          <span className="text-slate-700">{flag}</span>
         </li>
       ))}
     </ul>
   );
 }
 
-// ─── Cover Letter box ─────────────────────────────────────────────────────────
+const BADGE = 'bg-slate-100 text-slate-600 text-xs font-medium px-2.5 py-1 rounded-lg';
+
+// ─── Cover Letter box (Upwork) ────────────────────────────────────────────────
 
 function CoverLetterBox({ analysisId, initialLetter, tone: initialTone }) {
   const dispatch = useDispatch();
   const [letter, setLetter] = useState(initialLetter || '');
   const [tone, setTone] = useState(initialTone || 'professional');
-  const [regenerating, setRegenerating] = useState(false);
+  const [regenerating, setRegen] = useState(false);
   const [copied, setCopied] = useState(false);
   const textareaRef = useRef(null);
-
   const tones = ['professional', 'confident', 'friendly', 'concise'];
 
   const handleCopy = async () => {
@@ -73,7 +73,7 @@ function CoverLetterBox({ analysisId, initialLetter, tone: initialTone }) {
   };
 
   const handleRegenerate = async () => {
-    setRegenerating(true);
+    setRegen(true);
     try {
       const res = await proposalsApi.regenerate({ analysisId, tone });
       setLetter(res.data.cover_letter);
@@ -85,7 +85,7 @@ function CoverLetterBox({ analysisId, initialLetter, tone: initialTone }) {
         addNotification({ type: 'error', message: 'Regeneration failed. Please try again.' }),
       );
     } finally {
-      setRegenerating(false);
+      setRegen(false);
     }
   };
 
@@ -125,8 +125,6 @@ function CoverLetterBox({ analysisId, initialLetter, tone: initialTone }) {
           <p className="text-xs text-slate-400">Edit directly before sending</p>
         </div>
       </div>
-
-      {/* Tone selector */}
       <div className="flex items-center gap-2 mb-4 flex-wrap">
         <span className="text-xs font-medium text-slate-500 shrink-0">Tone:</span>
         {tones.map((t) => (
@@ -144,102 +142,36 @@ function CoverLetterBox({ analysisId, initialLetter, tone: initialTone }) {
           </button>
         ))}
       </div>
-
-      {/* Editable textarea */}
       <textarea
         ref={textareaRef}
         value={letter}
         onChange={(e) => setLetter(e.target.value)}
         className="w-full text-sm text-slate-700 leading-relaxed resize-y border border-slate-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[180px] bg-slate-50 focus:bg-white transition-all"
-        placeholder="AI cover letter will appear here…"
       />
-
-      {/* Word count */}
       <p className="text-xs text-slate-400 text-right mt-1.5">
         {letter.trim().split(/\s+/).filter(Boolean).length} words
       </p>
-
-      {/* Actions */}
       <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-100">
         <button
           type="button"
           onClick={handleCopy}
           className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors shadow-sm shadow-blue-500/20"
         >
-          {copied ? (
-            <>
-              <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                <path
-                  fillRule="evenodd"
-                  d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              Copied!
-            </>
-          ) : (
-            <>
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                />
-              </svg>
-              Copy
-            </>
-          )}
+          {copied ? '✓ Copied!' : 'Copy'}
         </button>
-
         <button
           type="button"
           onClick={handleRegenerate}
           disabled={regenerating}
           className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl border border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50 disabled:opacity-60 transition-all"
         >
-          {regenerating ? (
-            <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-              />
-            </svg>
-          ) : (
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
-          )}
           {regenerating ? 'Regenerating…' : 'Regenerate'}
         </button>
-
         <button
           type="button"
           onClick={handleDownload}
           className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-all"
         >
-          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-            />
-          </svg>
           Download .txt
         </button>
       </div>
@@ -247,7 +179,7 @@ function CoverLetterBox({ analysisId, initialLetter, tone: initialTone }) {
   );
 }
 
-// ─── Outcome recorder ─────────────────────────────────────────────────────────
+// ─── Outcome recorder (Upwork) ────────────────────────────────────────────────
 
 function OutcomeRecorder({ analysisId, initialOutcome }) {
   const dispatch = useDispatch();
@@ -266,12 +198,7 @@ function OutcomeRecorder({ analysisId, initialOutcome }) {
         actual_bid_amount: outcome.actual_bid_amount ? Number(outcome.actual_bid_amount) : null,
       });
       setSaved(true);
-      dispatch(
-        addNotification({
-          type: 'success',
-          message: 'Outcome saved. This improves your AI recommendations.',
-        }),
-      );
+      dispatch(addNotification({ type: 'success', message: 'Outcome saved.' }));
       setTimeout(() => setSaved(false), 3000);
     } catch {
       dispatch(addNotification({ type: 'error', message: 'Failed to save outcome.' }));
@@ -303,9 +230,7 @@ function OutcomeRecorder({ analysisId, initialOutcome }) {
           <p className="text-xs text-slate-400">Help FreelanceIQ learn from your results</p>
         </div>
       </div>
-
       <div className="space-y-5">
-        {/* Did you bid? */}
         <div>
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2.5">
             Did you submit a bid?
@@ -316,11 +241,7 @@ function OutcomeRecorder({ analysisId, initialOutcome }) {
                 key={String(val)}
                 type="button"
                 onClick={() =>
-                  setOutcome((prev) => ({
-                    ...prev,
-                    did_bid: val,
-                    did_win: val ? prev.did_win : null,
-                  }))
+                  setOutcome((p) => ({ ...p, did_bid: val, did_win: val ? p.did_win : null }))
                 }
                 className={`px-5 py-2 text-sm rounded-xl border font-semibold transition-all duration-150 ${
                   outcome.did_bid === val
@@ -333,10 +254,8 @@ function OutcomeRecorder({ analysisId, initialOutcome }) {
             ))}
           </div>
         </div>
-
         {outcome.did_bid && (
           <>
-            {/* Did you win? */}
             <div>
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2.5">
                 Did you win the contract?
@@ -350,14 +269,14 @@ function OutcomeRecorder({ analysisId, initialOutcome }) {
                   <button
                     key={label}
                     type="button"
-                    onClick={() => setOutcome((prev) => ({ ...prev, did_win: val }))}
+                    onClick={() => setOutcome((p) => ({ ...p, did_win: val }))}
                     className={`px-4 py-2 text-sm rounded-xl border font-semibold transition-all duration-150 ${
                       outcome.did_win === val
                         ? val === true
-                          ? 'border-emerald-500 bg-emerald-500 text-white shadow-sm shadow-emerald-500/20'
+                          ? 'border-emerald-500 bg-emerald-500 text-white'
                           : val === false
-                            ? 'border-red-400 bg-red-500 text-white shadow-sm shadow-red-500/20'
-                            : 'border-amber-400 bg-amber-500 text-white shadow-sm shadow-amber-500/20'
+                            ? 'border-red-400 bg-red-500 text-white'
+                            : 'border-amber-400 bg-amber-500 text-white'
                         : 'border-slate-200 text-slate-600 bg-slate-50 hover:border-slate-300'
                     }`}
                   >
@@ -366,8 +285,6 @@ function OutcomeRecorder({ analysisId, initialOutcome }) {
                 ))}
               </div>
             </div>
-
-            {/* Actual bid amount */}
             <div>
               <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-2.5">
                 Actual bid amount (USD)
@@ -378,9 +295,7 @@ function OutcomeRecorder({ analysisId, initialOutcome }) {
                   type="number"
                   min="1"
                   value={outcome.actual_bid_amount}
-                  onChange={(e) =>
-                    setOutcome((prev) => ({ ...prev, actual_bid_amount: e.target.value }))
-                  }
+                  onChange={(e) => setOutcome((p) => ({ ...p, actual_bid_amount: e.target.value }))}
                   placeholder="e.g. 850"
                   className="flex-1 px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-all"
                 />
@@ -388,180 +303,40 @@ function OutcomeRecorder({ analysisId, initialOutcome }) {
             </div>
           </>
         )}
-
         <button
           type="button"
           onClick={handleSave}
           disabled={saving}
           className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl bg-slate-900 hover:bg-slate-800 text-white disabled:opacity-60 transition-all shadow-sm"
         >
-          {saving ? (
-            <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-              />
-            </svg>
-          ) : saved ? (
-            <svg className="h-4 w-4 text-emerald-400" viewBox="0 0 20 20" fill="currentColor">
-              <path
-                fillRule="evenodd"
-                d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"
-                clipRule="evenodd"
-              />
-            </svg>
-          ) : null}
-          {saved ? 'Saved!' : saving ? 'Saving…' : 'Save outcome'}
+          {saved ? '✓ Saved!' : saving ? 'Saving…' : 'Save outcome'}
         </button>
       </div>
     </div>
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// ─── Upwork bid detail view ───────────────────────────────────────────────────
 
-const WIN_PROB_STYLE = (p) =>
-  p === 'High'
-    ? 'bg-emerald-100 text-emerald-700'
-    : p === 'Medium'
-      ? 'bg-amber-100 text-amber-700'
-      : 'bg-red-100 text-red-700';
-
-const BADGE_STYLE = 'bg-slate-100 text-slate-600 text-xs font-medium px-2.5 py-1 rounded-lg';
-
-export default function AnalysisDetailPage() {
-  const { id } = useParams();
-  const [analysis, setAnalysis] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    analysisApi
-      .getById(id)
-      .then((res) => {
-        setAnalysis(res.data);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [id]);
-
-  if (loading) {
-    return (
-      <div className="space-y-4 max-w-3xl">
-        <div className="h-5 w-28 bg-slate-200 rounded animate-pulse" />
-        <SkeletonCard />
-        <SkeletonCard />
-        <SkeletonCard />
-      </div>
-    );
-  }
-
-  if (!analysis) {
-    return (
-      <div className="text-center py-20 bg-white rounded-2xl border border-slate-200">
-        <p className="text-slate-500 font-medium">Analysis not found.</p>
-        <Link
-          to="/analysis/history"
-          className="text-blue-600 text-sm hover:underline mt-2 inline-block"
-        >
-          ← Back to history
-        </Link>
-      </div>
-    );
-  }
-
-  const { job, result, proposal, outcome } = analysis;
+function BidDetailView({ analysis }) {
+  const { result, proposal, outcome } = analysis;
+  const WIN_PROB_STYLE = (p) =>
+    p === 'High'
+      ? 'bg-emerald-100 text-emerald-700'
+      : p === 'Medium'
+        ? 'bg-amber-100 text-amber-700'
+        : 'bg-red-100 text-red-700';
 
   return (
-    <div className="space-y-5">
-      {/* Back */}
-      <Link
-        to="/analysis/history"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors"
-      >
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-        Back to history
-      </Link>
-
-      {/* Job card */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <div>
-            <h2 className="text-lg lg:text-xl font-bold text-slate-900 leading-tight">
-              {job.title}
-            </h2>
-            <p className="text-sm text-slate-400 mt-0.5 capitalize">
-              {job.platform} · {new Date(analysis.created_at).toLocaleDateString()}
-            </p>
-          </div>
-          {job.url && (
-            <a
-              href={job.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="shrink-0 text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors"
-            >
-              View job
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                />
-              </svg>
-            </a>
-          )}
-        </div>
-        <p className="text-sm text-slate-600 leading-relaxed mb-4">{job.description}</p>
-        <div className="flex flex-wrap gap-1.5 mb-4">
-          {job.skills_required.map((skill) => (
-            <span key={skill} className={BADGE_STYLE}>
-              {skill}
-            </span>
-          ))}
-        </div>
-        {(job.budget_min || job.client_hires != null) && (
-          <div className="flex flex-wrap gap-5 text-sm text-slate-500 pt-4 border-t border-slate-100">
-            {job.budget_min && (
-              <span>
-                Budget:{' '}
-                <span className="font-semibold text-slate-800">
-                  ${job.budget_min}–${job.budget_max}
-                </span>
-              </span>
-            )}
-            {job.client_hires != null && (
-              <span>
-                Client hires:{' '}
-                <span className="font-semibold text-slate-800">{job.client_hires}</span>
-              </span>
-            )}
-          </div>
-        )}
-      </div>
-
+    <>
       {/* Score + result row */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        {/* Gauge */}
         <div className="sm:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 flex flex-col items-center justify-center shadow-sm">
           <BidScoreGauge score={result.bid_score} size={160} strokeWidth={14} />
           <p className="text-xs text-slate-500 text-center mt-3 leading-relaxed max-w-lg">
             {result.score_reasoning}
           </p>
         </div>
-
-        {/* Details */}
         <div className="sm:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
           <div>
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1.5">
@@ -571,7 +346,6 @@ export default function AnalysisDetailPage() {
               ${result.bid_min} – ${result.bid_max}
             </p>
           </div>
-
           <div>
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">
               Win probability
@@ -583,19 +357,18 @@ export default function AnalysisDetailPage() {
               {result.win_probability}
             </span>
           </div>
-
           <div className="flex gap-6">
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">
                 Competition
               </p>
-              <span className={BADGE_STYLE}>{result.competition_level}</span>
+              <span className={BADGE}>{result.competition_level}</span>
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">
                 Category
               </p>
-              <span className={BADGE_STYLE}>{result.category}</span>
+              <span className={BADGE}>{result.category}</span>
             </div>
           </div>
         </div>
@@ -650,8 +423,439 @@ export default function AnalysisDetailPage() {
         tone={proposal?.tone_detected}
       />
 
-      {/* Outcome recorder */}
+      {/* Outcome */}
       <OutcomeRecorder analysisId={analysis._id} initialOutcome={outcome} />
+    </>
+  );
+}
+
+// ─── LinkedIn job_match detail view ──────────────────────────────────────────
+
+function MatchDetailView({ analysis }) {
+  const { match_result } = analysis;
+
+  const ACTION_STYLE = (a) =>
+    a === 'Apply'
+      ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
+      : a === 'Apply with caveats'
+        ? 'bg-amber-100 text-amber-700 border-amber-200'
+        : 'bg-red-100 text-red-700 border-red-200';
+
+  const action = match_result?.recommended_action || 'Apply with caveats';
+
+  return (
+    <>
+      {/* Match score + reasoning */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div className="sm:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 flex flex-col items-center justify-center shadow-sm">
+          <BidScoreGauge
+            score={match_result?.match_score ?? 0}
+            size={160}
+            strokeWidth={14}
+            label="Match Score"
+          />
+          <p className="text-xs text-slate-500 text-center mt-3 leading-relaxed max-w-lg">
+            {match_result?.score_reasoning}
+          </p>
+        </div>
+
+        <div className="sm:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+          {/* Recommended action */}
+          <div>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">
+              Recommendation
+            </p>
+            <span
+              className={`inline-flex items-center gap-2 text-sm font-bold px-4 py-2 rounded-xl border ${ACTION_STYLE(action)}`}
+            >
+              {action === 'Apply' ? '✓' : action === 'Skip' ? '✗' : '⚡'} {action}
+            </span>
+          </div>
+
+          {/* Skill gaps */}
+          {match_result?.skill_gaps?.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">
+                Skill gaps
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {match_result.skill_gaps.map((s) => (
+                  <span
+                    key={s}
+                    className="text-xs font-medium px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-100"
+                  >
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Matched skills */}
+          {match_result?.matched_skills?.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">
+                Matched skills
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {match_result.matched_skills.map((s) => (
+                  <span
+                    key={s}
+                    className="text-xs font-medium px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100"
+                  >
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Strengths */}
+      {match_result?.strengths?.length > 0 && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center">
+              <svg
+                className="w-3.5 h-3.5 text-blue-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+            <h3 className="text-sm font-bold text-slate-900">Why you're a fit</h3>
+          </div>
+          <FlagList flags={match_result.strengths} variant="green" />
+        </div>
+      )}
+
+      {/* CV improvement guidance */}
+      {analysis.cv_guidance && <CVGuidanceCard guidance={analysis.cv_guidance} />}
+    </>
+  );
+}
+
+// ─── CV Improvement Guidance card (LinkedIn job_match) ───────────────────────
+
+function CVGuidanceCard({ guidance }) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="p-6 pb-4">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-sm shadow-violet-500/20">
+            <svg
+              className="w-4 h-4 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-slate-900">CV Improvement Guide</h3>
+            <p className="text-xs text-slate-400">
+              Personalised advice to tailor your CV for this role
+            </p>
+          </div>
+        </div>
+        {/* Overall assessment */}
+        <p className="text-sm text-slate-600 leading-relaxed">{guidance.overall_assessment}</p>
+      </div>
+
+      {/* Summary rewrite hint */}
+      {guidance.summary_rewrite_hint && (
+        <div className="mx-6 mb-4 p-3.5 rounded-xl bg-violet-50 border border-violet-100">
+          <p className="text-xs font-semibold text-violet-700 mb-1">Suggested summary opening</p>
+          <p className="text-xs text-violet-800 italic leading-relaxed">
+            "{guidance.summary_rewrite_hint}"
+          </p>
+        </div>
+      )}
+
+      {/* Priority changes */}
+      {guidance.priority_changes?.length > 0 && (
+        <div className="px-6 mb-5">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">
+            Top priority changes
+          </p>
+          <div className="space-y-3">
+            {guidance.priority_changes.map((change, i) => (
+              <div key={i} className="rounded-xl border border-amber-100 bg-amber-50 p-3.5">
+                <div className="flex items-start gap-2 mb-1">
+                  <span className="shrink-0 w-5 h-5 rounded-full bg-amber-400 text-white text-xs font-bold flex items-center justify-center mt-0.5">
+                    {i + 1}
+                  </span>
+                  <div>
+                    <span className="text-xs font-bold text-amber-800">{change.section}</span>
+                    <p className="text-xs text-amber-700 mt-0.5">{change.issue}</p>
+                    <p className="text-xs font-medium text-amber-900 mt-1">→ {change.action}</p>
+                    {change.example && (
+                      <p className="text-xs text-slate-600 italic mt-1.5 bg-white/70 rounded-lg px-2 py-1.5">
+                        e.g. "{change.example}"
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Keywords */}
+      <div className="px-6 mb-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {guidance.keywords_to_add?.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">
+              Missing keywords (add these)
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {guidance.keywords_to_add.map((kw) => (
+                <span
+                  key={kw}
+                  className="text-xs font-medium px-2.5 py-1 rounded-lg bg-red-50 text-red-700 border border-red-100"
+                >
+                  {kw}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+        {guidance.keywords_to_emphasise?.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">
+              Emphasise more
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {guidance.keywords_to_emphasise.map((kw) => (
+                <span
+                  key={kw}
+                  className="text-xs font-medium px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-100"
+                >
+                  {kw}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Expandable: sections + ATS tips */}
+      {(guidance.sections_to_improve?.length > 0 || guidance.ats_tips?.length > 0) && (
+        <>
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="w-full flex items-center justify-between px-6 py-3 text-xs font-semibold text-slate-500 hover:text-slate-700 border-t border-slate-100 hover:bg-slate-50 transition-colors"
+          >
+            <span>{expanded ? 'Hide' : 'Show'} section tips & ATS checklist</span>
+            <svg
+              className={`w-4 h-4 transition-transform ${expanded ? 'rotate-180' : ''}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {expanded && (
+            <div className="px-6 pb-6 pt-3 space-y-4 border-t border-slate-100">
+              {guidance.sections_to_improve?.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">
+                    Section-by-section fixes
+                  </p>
+                  <div className="space-y-2">
+                    {guidance.sections_to_improve.map((s, i) => (
+                      <div key={i} className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                        <p className="text-xs font-bold text-slate-700 mb-0.5">{s.section}</p>
+                        <p className="text-xs text-slate-500 mb-1">{s.current_weakness}</p>
+                        <p className="text-xs text-slate-700 font-medium">→ {s.how_to_fix}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {guidance.ats_tips?.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">
+                    ATS & formatting checklist
+                  </p>
+                  <ul className="space-y-1.5">
+                    {guidance.ats_tips.map((tip, i) => (
+                      <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
+                        <svg
+                          className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2.5}
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        {tip}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── Main page ────────────────────────────────────────────────────────────────
+
+export default function AnalysisDetailPage() {
+  const { id } = useParams();
+  const [analysis, setAnalysis] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    analysisApi
+      .getById(id)
+      .then((res) => setAnalysis(res.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="space-y-4 max-w-3xl">
+        <div className="h-5 w-28 bg-slate-200 rounded animate-pulse" />
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
+      </div>
+    );
+  }
+
+  if (!analysis) {
+    return (
+      <div className="text-center py-20 bg-white rounded-2xl border border-slate-200">
+        <p className="text-slate-500 font-medium">Analysis not found.</p>
+        <Link
+          to="/analysis/history"
+          className="text-blue-600 text-sm hover:underline mt-2 inline-block"
+        >
+          ← Back to history
+        </Link>
+      </div>
+    );
+  }
+
+  const { job } = analysis;
+  const isMatch = analysis.analysis_type === 'job_match';
+
+  return (
+    <div className="space-y-5">
+      {/* Back */}
+      <Link
+        to="/analysis/history"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors"
+      >
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+        Back to history
+      </Link>
+
+      {/* Job card */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <h2 className="text-lg lg:text-xl font-bold text-slate-900 leading-tight">
+                {job.title}
+              </h2>
+              {isMatch && (
+                <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 uppercase tracking-wider shrink-0">
+                  LinkedIn
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-slate-400 capitalize">
+              {job.platform}
+              {isMatch && job.company ? ` · ${job.company}` : ''}
+              {isMatch && job.location ? ` · ${job.location}` : ''}
+              {isMatch && job.seniority_level ? ` · ${job.seniority_level}` : ''}
+              {' · '}
+              {new Date(analysis.created_at).toLocaleDateString()}
+            </p>
+          </div>
+          {job.url && (
+            <a
+              href={job.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors"
+            >
+              View job
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                />
+              </svg>
+            </a>
+          )}
+        </div>
+        <p className="text-sm text-slate-600 leading-relaxed mb-4">{job.description}</p>
+        {job.skills_required?.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {job.skills_required.map((skill) => (
+              <span key={skill} className={BADGE}>
+                {skill}
+              </span>
+            ))}
+          </div>
+        )}
+        {!isMatch && (job.budget_min || job.client_hires != null) && (
+          <div className="flex flex-wrap gap-5 text-sm text-slate-500 pt-4 border-t border-slate-100">
+            {job.budget_min > 0 && (
+              <span>
+                Budget:{' '}
+                <span className="font-semibold text-slate-800">
+                  ${job.budget_min}–${job.budget_max}
+                </span>
+              </span>
+            )}
+            {job.client_hires != null && (
+              <span>
+                Client hires:{' '}
+                <span className="font-semibold text-slate-800">{job.client_hires}</span>
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Type-specific content */}
+      {isMatch ? <MatchDetailView analysis={analysis} /> : <BidDetailView analysis={analysis} />}
     </div>
   );
 }

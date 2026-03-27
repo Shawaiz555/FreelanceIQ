@@ -12,7 +12,7 @@ let outcomeState = { did_bid: null, did_win: null };
 
 // ─── DOM refs ─────────────────────────────────────────────────────────────────
 
-const states = ['confirm', 'extracting', 'analyzing', 'unauthenticated', 'result', 'result-match', 'error'];
+const states = ['confirm', 'extracting', 'analyzing', 'unauthenticated', 'result', 'result-match', 'error', 'paste'];
 
 function showState(name) {
   states.forEach((s) => {
@@ -77,6 +77,31 @@ function buildGaugeSVG(score) {
 
 // ─── Render result ────────────────────────────────────────────────────────────
 
+function buildMetaGrid(items) {
+  return items
+    .filter(([, v]) => v)
+    .map(([label, value]) => `
+      <div class="meta-item">
+        <div class="meta-item-label">${label}</div>
+        <div class="meta-item-value">${value}</div>
+      </div>`)
+    .join('');
+}
+
+const _togglesSetup = new Set();
+function setupToggle(toggleId, bodyId) {
+  if (_togglesSetup.has(toggleId)) return;
+  _togglesSetup.add(toggleId);
+  const btn = $(toggleId);
+  const body = $(bodyId);
+  if (!btn || !body) return;
+  btn.addEventListener('click', () => {
+    const expanded = btn.getAttribute('aria-expanded') === 'true';
+    btn.setAttribute('aria-expanded', String(!expanded));
+    body.style.display = expanded ? 'none' : 'block';
+  });
+}
+
 function renderResult(analysis) {
   currentAnalysis = analysis;
   const { job, result, proposal } = analysis;
@@ -90,6 +115,21 @@ function renderResult(analysis) {
     .slice(0, 6)
     .map((s) => `<span class="skill-tag">${s}</span>`)
     .join('');
+
+  // About this job — meta + description
+  const aboutCard = $('result-about-card');
+  const desc = (job.description || '').replace(/^no description found\.?/i, '').trim();
+  if (desc || job.budget_min || job.budget_max || (job.skills_required || []).length) {
+    aboutCard.style.display = 'block';
+    $('result-meta-grid').innerHTML = buildMetaGrid([
+      ['Platform', job.platform],
+      ['Budget', job.budget_min ? `$${job.budget_min}–$${job.budget_max}` : ''],
+      ['Client hires', job.client_hires > 0 ? String(job.client_hires) : ''],
+      ['Skills', (job.skills_required || []).slice(0, 3).join(', ')],
+    ]);
+    $('result-job-desc').textContent = desc || 'No description available.';
+    setupToggle('result-about-toggle', 'result-about-body');
+  }
 
   // Gauge
   $('gauge-container').innerHTML = buildGaugeSVG(result.bid_score);
@@ -181,6 +221,23 @@ function renderMatchResult(analysis) {
     .map((s) => `<span class="skill-tag">${s}</span>`)
     .join('');
 
+  // About this job — meta + description
+  const matchAboutCard = $('match-about-card');
+  const matchDesc = (job.description || '').replace(/^no description found\.?/i, '').trim();
+  if (matchDesc || job.company || job.location) {
+    matchAboutCard.style.display = 'block';
+    $('match-meta-grid').innerHTML = buildMetaGrid([
+      ['Company', job.company || ''],
+      ['Location', job.location || ''],
+      ['Workplace', job.workplace_type || ''],
+      ['Seniority', job.seniority_level || ''],
+      ['Employment', job.employment_type || ''],
+      ['Skills', (job.skills_required || []).slice(0, 3).join(', ')],
+    ]);
+    $('match-job-desc').textContent = matchDesc || 'No description available.';
+    setupToggle('match-about-toggle', 'match-about-body');
+  }
+
   // Update analyzing spinner label if still showing
   const analyzingTitle = $('analyzing-title');
   const analyzingSub = $('analyzing-sub');
@@ -218,10 +275,27 @@ function renderMatchResult(analysis) {
   // Strengths
   renderFlags('match-strengths', match_result?.strengths || [], true);
 
-  // Tailored CV card
-  if (analysis.generated_cv && analysis.generated_cv.length > 50) {
-    $('match-cv-card').style.display = 'block';
-    $('match-cv-preview').textContent = 'CV rewritten in your original format, tailored for this job. Download to review and paste into your original file.';
+  // CV guidance card
+  const guidance = analysis.cv_guidance;
+  if (guidance) {
+    $('match-cv-guidance-card').style.display = 'block';
+    $('match-cv-guidance-assessment').textContent = guidance.overall_assessment || '';
+
+    // Missing keywords
+    const kwAdd = (guidance.keywords_to_add || []).slice(0, 6);
+    if (kwAdd.length) {
+      $('match-cv-guidance-keywords').innerHTML =
+        '<div style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Add these keywords</div>' +
+        kwAdd.map((k) => `<span style="display:inline-block;font-size:10px;font-weight:500;padding:2px 7px;border-radius:6px;background:#fef2f2;color:#b91c1c;border:1px solid #fee2e2;margin:2px;">${k}</span>`).join('');
+    }
+
+    // Top priority changes (first 2)
+    const changes = (guidance.priority_changes || []).slice(0, 2);
+    if (changes.length) {
+      $('match-cv-guidance-changes').innerHTML =
+        '<div style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Priority fixes</div>' +
+        changes.map((c, i) => `<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:6px 8px;margin-bottom:5px;font-size:11px;color:#92400e;"><strong>${c.section}:</strong> ${c.action}</div>`).join('');
+    }
   }
 
   showState('result-match');
@@ -245,10 +319,16 @@ function renderMatchSkills(containerId, skills, isPresent) {
 
 // ─── Message listener (from content.js) ──────────────────────────────────────
 
+// Track the platform of the current page so goToPaste() can auto-select it
+var _detectedPlatform = null;
+
 window.addEventListener('message', (event) => {
   // Only accept messages from our extension
   if (event.data?.source !== 'fiq-content') return;
   const { type, payload } = event.data;
+
+  // Capture platform whenever it arrives so manual "Paste" clicks can use it
+  if (payload?.platform) _detectedPlatform = payload.platform;
 
   switch (type) {
     case 'SET_STATE':
@@ -270,6 +350,13 @@ window.addEventListener('message', (event) => {
           $('retry-btn').style.display = '';
         }
         $('error-msg').textContent = payload.message || 'Something went wrong.';
+      }
+      if (payload.state === 'paste' && payload.platform) {
+        const sel = $('paste-platform');
+        if (sel) sel.value = payload.platform;
+        // Hide the platform selector — auto-detected from URL
+        const selWrap = $('paste-platform-wrap');
+        if (selWrap) selWrap.style.display = 'none';
       }
       showState(payload.state);
       break;
@@ -296,13 +383,22 @@ window.addEventListener('message', (event) => {
       // Description
       const descEl = $('confirm-desc');
       const desc = (payload.description || '').trim();
-      if (desc && desc !== 'No description found.') {
+      const hasDesc = desc && desc !== 'No description found.' && desc.length > 30;
+      if (hasDesc) {
         descEl.textContent = desc;
         descEl.classList.remove('no-desc');
       } else {
         descEl.textContent = 'No description visible yet — it may load after you click.';
         descEl.classList.add('no-desc');
       }
+      // Show/hide the "description not loaded" guide
+      // Suppress on pages where no job is expected (e.g. /jobs home feed)
+      const guideEl = $('confirm-no-desc-guide');
+      if (guideEl) guideEl.style.display = (!hasDesc && !payload.noGuide) ? 'block' : 'none';
+
+      // Disable Analyse button when no description is available yet
+      const analyseBtn = $('confirm-analyse-btn');
+      if (analyseBtn) analyseBtn.disabled = !hasDesc;
 
       // Skills
       const skillsSection = $('confirm-skills-section');
@@ -485,27 +581,102 @@ $('retry-btn').addEventListener('click', () => {
   window.parent.postMessage({ source: 'fiq-sidebar', type: 'SIDEBAR_READY' }, '*');
 });
 
-// ─── Job-match (LinkedIn) button handlers ─────────────────────────────────────
-
-// Download tailored CV — plain text preserving the user's original CV structure
-$('match-cv-download-btn').addEventListener('click', () => {
-  if (!currentAnalysis?.generated_cv) return;
-  const jobTitle = currentAnalysis.job?.title || 'job';
-  const safeTitle = jobTitle.replace(/[^a-z0-9\s-]/gi, '').replace(/\s+/g, '-').toLowerCase().slice(0, 60);
-
-  const blob = new Blob([currentAnalysis.generated_cv], { type: 'text/plain' });
-  const blobUrl = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = blobUrl;
-  a.download = `cv-${safeTitle || 'tailored'}.txt`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(blobUrl);
-});
-
 // Re-analyse match
 $('match-reanalyse-btn').addEventListener('click', () => {
   showState('extracting');
   window.parent.postMessage({ source: 'fiq-sidebar', type: 'SIDEBAR_READY' }, '*');
 });
+
+// ─── Paste job description feature ────────────────────────────────────────────
+
+// Entry points → show paste form (auto-detect platform from page URL)
+function goToPaste() {
+  const sel = $('paste-platform');
+  const wrap = $('paste-platform-wrap');
+  if (_detectedPlatform) {
+    if (sel) sel.value = _detectedPlatform === 'linkedin' ? 'linkedin' : 'upwork';
+    if (wrap) wrap.style.display = 'none';
+  } else {
+    // No platform detected yet — show the selector so user can choose
+    if (wrap) wrap.style.display = '';
+  }
+  showState('paste');
+}
+$('paste-from-error-btn').addEventListener('click', goToPaste);
+$('paste-from-confirm-btn').addEventListener('click', goToPaste);
+
+// Back → return to error state (safe fallback)
+$('paste-back-btn').addEventListener('click', () => showState('error'));
+
+// Character counter + button enable/disable
+$('paste-desc').addEventListener('input', () => {
+  const val = $('paste-desc').value;
+  $('paste-char-hint').textContent = `${val.length} / 15000`;
+  $('paste-analyse-btn').disabled = val.trim().length < 50;
+});
+
+// Submit paste analysis
+$('paste-analyse-btn').addEventListener('click', runPasteAnalysis);
+
+async function runPasteAnalysis() {
+  const platform = $('paste-platform').value;
+  const title = ($('paste-title').value || '').trim() || 'Manual Entry';
+  const desc = ($('paste-desc').value || '').trim();
+  const errEl = $('paste-error');
+
+  // Validate
+  if (desc.length < 50) {
+    errEl.textContent = 'Description must be at least 50 characters.';
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.display = 'none';
+
+  // Auth check
+  const auth = await chrome.runtime.sendMessage({ type: 'GET_AUTH' });
+  if (!auth?.token) {
+    showState('unauthenticated');
+    return;
+  }
+
+  // Show analyzing state with appropriate label
+  const analyzingTitle = $('analyzing-title');
+  const analyzingSub = $('analyzing-sub');
+  if (analyzingTitle) analyzingTitle.textContent = platform === 'linkedin' ? 'Matching your CV to this job…' : 'AI is scoring this job…';
+  if (analyzingSub) analyzingSub.textContent = 'Usually takes 3–5 seconds';
+  showState('analyzing');
+
+  // 'other' platform uses bid pipeline (treated as upwork)
+  const apiPlatform = platform === 'other' ? 'upwork' : platform;
+
+  const res = await chrome.runtime.sendMessage({
+    type: 'API_REQUEST',
+    payload: {
+      method: 'POST',
+      path: '/analysis/create',
+      body: {
+        platform: apiPlatform,
+        title,
+        description: desc,
+        url: '',
+        budget_min: 0,
+        budget_max: 0,
+        skills_required: [],
+      },
+    },
+  });
+
+  if (res?.data?.success && res.data.data) {
+    if (res.data.data.analysis_type === 'job_match') {
+      renderMatchResult(res.data.data);
+    } else {
+      renderResult(res.data.data);
+    }
+  } else {
+    const errMsg = res?.data?.error || res?.error || 'Analysis failed. Please try again.';
+    // Show error state with message
+    $('error-title').textContent = 'Analysis failed';
+    $('error-msg').textContent = errMsg;
+    showState('error');
+  }
+}

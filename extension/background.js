@@ -8,7 +8,7 @@
  * - Periodic token refresh alarm to keep the token fresh
  */
 
-const API_BASE = 'https://freelance-iq.vercel.app/api';
+const API_BASE = 'http://localhost:3001/api';
 
 // ─── FreelanceIQ app tab helpers ─────────────────────────────────────────────
 
@@ -158,12 +158,69 @@ async function apiRequest({ method = 'GET', path, body }) {
 
       options.headers.Authorization = `Bearer ${token}`;
       const retry = await fetch(`${API_BASE}${path}`, options);
-      const retryData = await retry.json();
+      const retryContentType = retry.headers.get('Content-Type') || '';
+      const retryData = retryContentType.includes('application/json')
+        ? await retry.json()
+        : await retry.text();
       return { data: retryData, status: retry.status };
     }
 
-    const data = await response.json();
+    const contentType = response.headers.get('Content-Type') || '';
+    const data = contentType.includes('application/json')
+      ? await response.json()
+      : await response.text();
     return { data, status: response.status };
+  } catch (err) {
+    return { error: err.message, status: 0 };
+  }
+}
+
+// ─── Binary API request (returns response body as Base64) ────────────────────
+
+async function binaryApiRequest({ method = 'POST', path, body }) {
+  let { token, tokenExp } = await getAuth();
+
+  if (token && tokenExp && Date.now() > tokenExp - 60_000) {
+    token = await refreshToken();
+  }
+
+  if (!token) {
+    return { error: 'Not authenticated', status: 401 };
+  }
+
+  const options = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  };
+
+  if (body && method !== 'GET') {
+    options.body = JSON.stringify(body);
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}${path}`, options);
+
+    if (!response.ok) {
+      const errText = await response.text();
+      let errMsg = errText;
+      try { errMsg = JSON.parse(errText)?.error || errText; } catch (_) {}
+      return { error: errMsg, status: response.status };
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const uint8 = new Uint8Array(arrayBuffer);
+    let binary = '';
+    for (let i = 0; i < uint8.length; i++) binary += String.fromCharCode(uint8[i]);
+    const base64 = btoa(binary);
+
+    const contentDisposition = response.headers.get('Content-Disposition') || '';
+    const filenameMatch = contentDisposition.match(/filename="([^"]+)"/);
+    const filename = filenameMatch ? filenameMatch[1] : 'download.docx';
+
+    return { base64, filename, status: response.status };
   } catch (err) {
     return { error: err.message, status: 0 };
   }
@@ -198,6 +255,11 @@ async function login({ email, password }) {
 
 async function logout() {
   await clearAuth();
+  // Tell any open web app tab to log out too
+  try {
+    const tab = await getFiqTab();
+    if (tab) await chrome.tabs.sendMessage(tab.id, { type: 'FIQ_PUSH_LOGOUT' }).catch(() => {});
+  } catch (_) {}
   return { success: true };
 }
 
@@ -225,6 +287,9 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
       case 'API_REQUEST':
         return apiRequest(payload);
+
+      case 'BINARY_API_REQUEST':
+        return binaryApiRequest(payload);
 
       case 'SET_AUTH':
         if (payload?.token && payload?.user) {

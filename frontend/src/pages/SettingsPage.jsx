@@ -140,55 +140,47 @@ function DeleteConfirmModal({ onConfirm, onCancel, loading }) {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-const LANGUAGES = [
-  { value: 'en', label: 'English', available: true },
-  { value: 'ur', label: 'اردو', available: false },
-  { value: 'hi', label: 'हिन्दी', available: false },
-  { value: 'bn', label: 'বাংলা', available: false },
-];
-
 export default function SettingsPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
 
-  const [settings, setSettings] = useState({
-    email_digest: user?.settings?.email_digest ?? true,
-    extension_auto_open: user?.settings?.extension_auto_open ?? true,
-    language: user?.settings?.language ?? 'en',
-  });
+  const [autoOpen, setAutoOpen] = useState(user?.settings?.extension_auto_open ?? true);
   const [saving, setSaving] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [extensionInstalled, setExtensionInstalled] = useState(false);
 
+  // Detect extension + ask it to report its current auto-open state
   useEffect(() => {
     const handler = (event) => {
-      if (
-        event.data?.source === 'fiq-extension' &&
-        event.data?.type === 'FIQ_EXTENSION_INSTALLED'
-      ) {
-        setExtensionInstalled(true);
+      if (event.data?.source === 'fiq-extension') {
+        if (event.data?.type === 'FIQ_EXTENSION_INSTALLED') setExtensionInstalled(true);
+        if (event.data?.type === 'FIQ_AUTO_OPEN_STATE' && typeof event.data.value === 'boolean') {
+          setAutoOpen(event.data.value);
+        }
       }
     };
     window.addEventListener('message', handler);
-    // Ask the extension to re-announce itself (handles case where it fired before this component mounted)
     window.postMessage({ type: 'FIQ_PING_REQUEST' }, '*');
+    window.postMessage({ type: 'FIQ_GET_AUTO_OPEN' }, '*');
     return () => window.removeEventListener('message', handler);
   }, []);
 
-  const handleToggle = (key) => (value) => setSettings((prev) => ({ ...prev, [key]: value }));
+  const handleAutoOpenChange = (value) => {
+    setAutoOpen(value);
+    // Immediately update the extension (no save button needed for this)
+    window.postMessage({ type: 'FIQ_SET_AUTO_OPEN', value }, '*');
+  };
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await userApi.updateProfile({ settings });
+      const res = await userApi.updateProfile({ settings: { extension_auto_open: autoOpen } });
       dispatch(updateUser(res.data));
-      dispatch(addNotification({ type: 'success', message: 'Settings saved successfully.' }));
+      dispatch(addNotification({ type: 'success', message: 'Settings saved.' }));
     } catch {
-      dispatch(
-        addNotification({ type: 'error', message: 'Failed to save settings. Please try again.' }),
-      );
+      dispatch(addNotification({ type: 'error', message: 'Failed to save settings.' }));
     } finally {
       setSaving(false);
     }
@@ -201,12 +193,7 @@ export default function SettingsPage() {
       dispatch(logout());
       navigate('/login', { replace: true });
     } catch {
-      dispatch(
-        addNotification({
-          type: 'error',
-          message: 'Failed to delete account. Please contact support.',
-        }),
-      );
+      dispatch(addNotification({ type: 'error', message: 'Failed to delete account. Please contact support.' }));
       setDeleting(false);
       setShowDeleteModal(false);
     }
@@ -217,79 +204,24 @@ export default function SettingsPage() {
       {/* Header */}
       <div>
         <h2 className="text-2xl font-black text-slate-900 tracking-tight">Settings</h2>
-        <p className="text-sm text-slate-400 mt-0.5">
-          Manage your notifications, extension, and account preferences.
-        </p>
+        <p className="text-sm text-slate-400 mt-0.5">Manage your extension and account preferences.</p>
       </div>
-
-      {/* Notifications */}
-      <SettingSection
-        title="Notifications"
-        gradient="from-blue-500 to-indigo-600"
-        icon={
-          <svg
-            className="w-4 h-4 text-white"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-            />
-          </svg>
-        }
-      >
-        <div className="space-y-5">
-          <Toggle
-            id="email_digest"
-            checked={settings.email_digest}
-            onChange={handleToggle('email_digest')}
-            label="Weekly email digest"
-            description="A weekly summary of your bid analyses, win rate trends, and earnings optimisation tips."
-          />
-          <div className="border-t border-slate-100" />
-          <Toggle
-            id="win_alerts"
-            checked
-            onChange={() =>
-              dispatch(
-                addNotification({ type: 'info', message: 'Win/loss alerts are always enabled.' }),
-              )
-            }
-            label="Win / loss alerts"
-            description="Get notified when you record an outcome on an analysis."
-          />
-        </div>
-      </SettingSection>
 
       {/* Chrome extension */}
       <SettingSection
         title="Chrome Extension"
         gradient="from-emerald-500 to-teal-600"
         icon={
-          <svg
-            className="w-4 h-4 text-white"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"
-            />
+          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
           </svg>
         }
       >
         <div className="space-y-5">
           <Toggle
             id="extension_auto_open"
-            checked={settings.extension_auto_open}
-            onChange={handleToggle('extension_auto_open')}
+            checked={autoOpen}
+            onChange={handleAutoOpenChange}
             label="Auto-open sidebar"
             description="Automatically show the FreelanceIQ sidebar when you open a job listing on Upwork or LinkedIn."
           />
@@ -317,53 +249,6 @@ export default function SettingsPage() {
         </div>
       </SettingSection>
 
-      {/* Language */}
-      <SettingSection
-        title="Language"
-        gradient="from-violet-500 to-purple-600"
-        icon={
-          <svg
-            className="w-4 h-4 text-white"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"
-            />
-          </svg>
-        }
-      >
-        <div className="space-y-3">
-          <p className="text-sm text-slate-500">Choose your preferred interface language.</p>
-          <div className="flex flex-wrap gap-2">
-            {LANGUAGES.map((lang) => (
-              <button
-                key={lang.value}
-                type="button"
-                disabled={!lang.available}
-                onClick={() =>
-                  lang.available && setSettings((prev) => ({ ...prev, language: lang.value }))
-                }
-                className={`px-4 py-2 text-sm rounded-xl border font-medium transition-all duration-150 ${
-                  settings.language === lang.value && lang.available
-                    ? 'border-blue-500 bg-blue-500 text-white shadow-sm shadow-blue-500/20'
-                    : !lang.available
-                      ? 'border-slate-100 text-slate-300 cursor-not-allowed bg-slate-50'
-                      : 'border-slate-200 text-slate-600 bg-slate-50 hover:border-slate-300'
-                }`}
-              >
-                {lang.label}
-                {!lang.available && <span className="ml-1.5 text-xs opacity-60">(soon)</span>}
-              </button>
-            ))}
-          </div>
-        </div>
-      </SettingSection>
-
       {/* Save button */}
       <div className="flex justify-end">
         <button
@@ -374,28 +259,12 @@ export default function SettingsPage() {
         >
           {saving ? (
             <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-              />
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
           ) : (
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           )}
           {saving ? 'Saving…' : 'Save settings'}
@@ -405,18 +274,8 @@ export default function SettingsPage() {
       {/* Danger zone */}
       <div className="rounded-2xl border border-red-200 bg-red-50/50 p-6">
         <div className="flex items-center gap-2 mb-2">
-          <svg
-            className="h-4 w-4 text-red-500"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-            />
+          <svg className="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
           <h3 className="text-sm font-bold text-red-700">Danger zone</h3>
         </div>

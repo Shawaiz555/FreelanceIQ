@@ -77,6 +77,8 @@ async function handler(req, res) {
         'profile.cv_text': '',
         'profile.cv_filename': '',
         'profile.cv_uploaded_at': null,
+        'profile.cv_file': '',
+        'profile.cv_mimetype': '',
       },
     });
     return res.status(200).json({ success: true, message: 'CV removed' });
@@ -108,6 +110,9 @@ async function handler(req, res) {
       'profile.cv_text': cv_text,
       'profile.cv_filename': req.file.originalname,
       'profile.cv_uploaded_at': new Date(),
+      // Store original file as Base64 so we can reconstruct DOCX with original formatting
+      'profile.cv_file': req.file.buffer.toString('base64'),
+      'profile.cv_mimetype': req.file.mimetype,
     },
   });
 

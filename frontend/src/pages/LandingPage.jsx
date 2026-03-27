@@ -429,7 +429,7 @@ function HeroSection() {
               Browser Extension
             </span>
             <span className="w-px h-3 bg-white/20" />
-            Auto-captures job details from Upwork &amp; LinkedIn
+            Auto-captures jobs from Upwork &amp; LinkedIn
           </div>
         </div>
 
@@ -439,14 +439,13 @@ function HeroSection() {
           style={{ animationDelay: '80ms' }}
         >
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.04] mb-6">
-            Score Every Bid.
+            Score Bids. Match Jobs.
             <br />
-            <GradientText>Win More Clients.</GradientText>
+            <GradientText>Land More Clients.</GradientText>
           </h1>
           <p className="text-lg sm:text-xl text-slate-400 leading-relaxed max-w-2xl mx-auto">
-            Install the FreelanceIQ extension, open any job on Upwork or LinkedIn, and click{' '}
-            <span className="text-white font-semibold">Analyze</span>. Get an instant AI score and
-            know exactly what to bid before you apply.
+            FreelanceIQ scores your Upwork proposals with live market data and matches your CV
+            to LinkedIn jobs — instantly. Upload your CV once, and let AI do the rest.
           </p>
         </div>
 
@@ -513,7 +512,7 @@ function HeroSection() {
           {[
             { icon: '✓', text: 'No credit card' },
             { icon: '✓', text: 'Free forever plan' },
-            { icon: '✓', text: 'Works on Upwork & LinkedIn' },
+            { icon: '✓', text: 'Upwork bids + LinkedIn CV match' },
           ].map((item) => (
             <span
               key={item.text}
@@ -770,8 +769,8 @@ function HowItWorksSection() {
   const steps = [
     {
       num: '01',
-      title: 'Open a Job & Click Analyze',
-      desc: 'Browse Upwork or LinkedIn as normal. When you find a job you want to bid on or apply for, click the FreelanceIQ browser extension icon. It automatically reads the job description — no copying or pasting needed.',
+      title: 'Upload Your CV Once',
+      desc: 'Sign up and upload your CV or résumé. FreelanceIQ extracts your skills, experience, and education automatically and pre-fills your profile. No manual form-filling required.',
       icon: (
         <svg
           className="w-6 h-6"
@@ -783,7 +782,7 @@ function HowItWorksSection() {
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
-            d="M14.25 6H12a2.25 2.25 0 00-2.25 2.25v12a2.25 2.25 0 002.25 2.25h8.25A2.25 2.25 0 0022.5 20.25v-7.5a2.25 2.25 0 00-2.25-2.25H18M14.25 6V4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V6M14.25 6h3.75M6.75 15.75L9 18l3.75-3.75"
+            d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
           />
         </svg>
       ),
@@ -791,8 +790,8 @@ function HowItWorksSection() {
     },
     {
       num: '02',
-      title: 'AI Scores Your Bid',
-      desc: 'Our AI reads your proposal or CV, compares it to the job requirements, checks your rate against Upwork market data, and generates a 0–100 score in seconds.',
+      title: 'Open a Job & Click Analyze',
+      desc: 'Browse Upwork or LinkedIn as normal. Click the FreelanceIQ extension — it auto-reads the job. On any other page, paste the description manually. Either way, the analysis starts instantly.',
       icon: (
         <svg
           className="w-6 h-6"
@@ -812,8 +811,8 @@ function HowItWorksSection() {
     },
     {
       num: '03',
-      title: 'Fix It & Win',
-      desc: "Get a plain-English explanation of your score, a suggested bid range based on real market data, and win probability — then use the AI rewriter to strengthen your proposal before sending.",
+      title: 'Get Your Score & Apply Smarter',
+      desc: 'For Upwork: get a 0–100 bid score, suggested rate range, win probability, and an AI-written cover letter. For LinkedIn: see your CV match score, skill gaps, strengths, and a ready-to-send application summary.',
       icon: (
         <svg
           className="w-6 h-6"
@@ -839,8 +838,8 @@ function HowItWorksSection() {
         <div className="reveal mb-16">
           <SectionHeader
             badge="How It Works"
-            title="From job page to score in seconds"
-            subtitle="The FreelanceIQ browser extension captures everything automatically. No copy-paste, no switching tabs — just open a job and hit Analyze."
+            title="From job page to decision in seconds"
+            subtitle="Upload your CV once, then let FreelanceIQ score every Upwork bid and match every LinkedIn job automatically — no copy-paste, no guesswork."
           />
         </div>
 
@@ -877,128 +876,68 @@ function FeaturesSection() {
 
   const features = [
     {
-      title: 'AI Bid Score (0–100)',
-      tag: 'Core Feature',
-      desc: 'Every proposal gets an objective score based on relevance, clarity, pricing, and persuasiveness. Know your odds before you submit.',
+      title: 'CV Upload & Auto-Profile',
+      tag: 'Onboarding',
+      desc: 'Upload your CV (PDF or Word) and FreelanceIQ automatically extracts your skills, experience, education, and certifications to build your profile — no manual entry needed.',
       gradient: 'from-blue-500 to-indigo-600',
       icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
-          />
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
         </svg>
       ),
     },
     {
-      title: 'Upwork Rate Intel',
-      tag: 'Pricing',
-      desc: 'See how your proposed rate compares to real market data for your skill on Upwork. Stop leaving money on the table or pricing yourself out.',
-      gradient: 'from-emerald-500 to-teal-600',
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75"
-          />
-        </svg>
-      ),
-    },
-    {
-      title: 'Proposal Rewriter',
-      tag: 'AI Writing',
-      desc: 'Not happy with your score? Get an AI-rewritten version of your proposal that keeps your voice and fixes the weak spots identified in the analysis.',
-      gradient: 'from-violet-500 to-purple-600',
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"
-          />
-        </svg>
-      ),
-    },
-    {
-      title: 'Score Breakdown',
-      tag: 'Analytics',
-      desc: 'Paste your proposal and get an instant 0–100 bid score, a plain-English explanation of your result, a suggested bid range, and win probability — all in seconds.',
-      gradient: 'from-amber-500 to-orange-600',
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"
-          />
-        </svg>
-      ),
-    },
-    {
-      title: 'Bid History & Trends',
-      tag: 'History',
-      desc: 'Track all your past proposals in one place. See how your average score improves over time and which job types you win most.',
+      title: 'LinkedIn CV Match',
+      tag: 'LinkedIn',
+      desc: 'See your CV match score (0–100) against any LinkedIn job. Get matched skills, skill gaps, personal strengths, and a tailored application summary — instantly.',
       gradient: 'from-sky-500 to-blue-600',
       icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z"
-          />
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
     },
     {
-      title: 'Win Probability',
-      tag: 'AI Powered',
-      desc: 'Based on your score and market conditions, FreelanceIQ estimates the likelihood a client will respond to your proposal — so you can decide when to bid.',
+      title: 'AI Bid Score (0–100)',
+      tag: 'Upwork',
+      desc: 'Every Upwork job gets an objective score based on your profile fit, pricing, and job quality. Know your odds and ideal rate range before you bid.',
+      gradient: 'from-emerald-500 to-teal-600',
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+        </svg>
+      ),
+    },
+    {
+      title: 'CV Guidance & Download',
+      tag: 'LinkedIn',
+      desc: 'For every LinkedIn job, FreelanceIQ generates tailored CV improvement tips and a downloadable cover letter aligned to the role — ready to attach when you apply.',
+      gradient: 'from-violet-500 to-purple-600',
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+        </svg>
+      ),
+    },
+    {
+      title: 'Manual Job Paste',
+      tag: 'Flexibility',
+      desc: "Extension didn't auto-detect? No problem. Paste any job description manually — from any platform — and get the same full AI analysis in seconds.",
+      gradient: 'from-amber-500 to-orange-600',
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" />
+        </svg>
+      ),
+    },
+    {
+      title: 'Analysis History',
+      tag: 'Tracking',
+      desc: 'Every bid score and job match is saved. Review past analyses, track your improvement over time, and revisit cover letters or match summaries whenever you need them.',
       gradient: 'from-pink-500 to-rose-600',
       icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z"
-          />
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z" />
         </svg>
       ),
     },
@@ -1010,8 +949,8 @@ function FeaturesSection() {
         <div className="reveal mb-16">
           <SectionHeader
             badge="Features"
-            title="Everything you need to win more bids"
-            subtitle="FreelanceIQ gives you the tools that top Upwork and LinkedIn job seekers use to consistently land clients."
+            title="One tool for Upwork bids & LinkedIn jobs"
+            subtitle="From CV extraction to match scores to cover letters — FreelanceIQ handles every step of your job search and proposal workflow."
           />
         </div>
 
@@ -1048,7 +987,7 @@ function FeaturesSection() {
 
 function DemoSection() {
   const ref = useScrollReveal();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('upwork');
 
   return (
     <section ref={ref} className="py-24 bg-white overflow-hidden">
@@ -1058,28 +997,28 @@ function DemoSection() {
           <div className="reveal-left">
             <SectionBadge>Live Example</SectionBadge>
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 mt-4 mb-6 leading-tight">
-              See exactly what your score means — and how to improve it
+              Two platforms. One tool. Instant clarity.
             </h2>
             <p className="text-slate-500 text-base leading-relaxed mb-8">
-              After you click Analyze, FreelanceIQ gives you an overall 0–100 bid score, a plain-English explanation of why you got that score, a suggested bid range based on real Upwork market data, and a win probability — so you know exactly where you stand before you send.
+              On Upwork you get a bid score, rate benchmarking, win probability, and an AI cover letter. On LinkedIn, your uploaded CV is matched to the job — you see your match score, skill gaps, strengths, and a ready-to-send application summary. Both in seconds.
             </p>
             <ul className="space-y-4">
               {[
                 {
-                  title: 'Bid score (0–100)',
-                  desc: 'Overall attractiveness of this job for your profile — higher means better fit and fairer terms.',
+                  title: 'Upwork: Bid score (0–100)',
+                  desc: 'Overall attractiveness of the job for your profile — higher means better fit, fairer budget, and stronger win odds.',
                 },
                 {
-                  title: 'Score reasoning',
-                  desc: 'A plain-English explanation of what drove the score and what to watch out for.',
+                  title: 'Upwork: Rate range & win probability',
+                  desc: 'Suggested bid range calibrated to real Upwork market data, plus a Low/Medium/High win likelihood.',
                 },
                 {
-                  title: 'Suggested bid range',
-                  desc: 'Minimum and maximum bid in USD, calibrated to Upwork market rates for this skill.',
+                  title: 'LinkedIn: CV match score',
+                  desc: 'See exactly how well your skills and experience align with the role — matched skills, gaps, and your key strengths.',
                 },
                 {
-                  title: 'Win probability',
-                  desc: 'Low, Medium, or High — how likely you are to win if you bid in the suggested range.',
+                  title: 'LinkedIn: Application summary & CV tips',
+                  desc: 'A tailored application summary and CV improvement suggestions, plus a downloadable cover letter for the role.',
                 },
               ].map((item, idx) => (
                 <li
@@ -1113,65 +1052,38 @@ function DemoSection() {
             <div className="bg-[#0f172a] rounded-2xl overflow-hidden shadow-2xl border border-indigo-500/15">
               {/* Tabs */}
               <div className="flex border-b border-white/10">
-                {['overview', 'breakdown', 'actions'].map((tab) => (
+                {[
+                  { id: 'upwork', label: 'Upwork Bid' },
+                  { id: 'linkedin', label: 'LinkedIn Match' },
+                ].map((tab) => (
                   <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
                     className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${
-                      activeTab === tab
+                      activeTab === tab.id
                         ? 'text-white border-b-2 border-blue-400'
                         : 'text-slate-500 hover:text-slate-300'
                     }`}
                   >
-                    {tab}
+                    {tab.label}
                   </button>
                 ))}
               </div>
 
               <div className="p-6">
-                {activeTab === 'overview' && (
-                  <div>
-                    <div className="flex items-center gap-4 mb-6">
+                {activeTab === 'upwork' && (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-4 mb-2">
                       <ScoreGauge score={76} size={90} />
                       <div>
-                        <p className="text-white font-bold text-lg">Score: 76 / 100</p>
-                        <p className="text-slate-400 text-sm">
-                          Good — a few improvements could push this above 85
-                        </p>
-                        <span className="inline-block mt-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-semibold">
-                          Upwork Job
-                        </span>
+                        <p className="text-white font-bold text-lg">Bid Score: 76 / 100</p>
+                        <p className="text-slate-400 text-sm">Good — a few tweaks could push this above 85</p>
+                        <span className="inline-block mt-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-semibold">Upwork</span>
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-3">
-                        Quick summary
-                      </p>
-                      {[
-                        { label: 'Good fit for this job category', positive: true },
-                        { label: 'Client has strong hire history', positive: true },
-                        { label: 'Rate slightly above Upwork median', positive: false },
-                        { label: 'Red flag: vague project timeline', positive: false },
-                      ].map((item) => (
-                        <div
-                          key={item.label}
-                          className={`flex items-center gap-2 text-sm px-3 py-2 rounded-lg ${item.positive ? 'bg-emerald-500/10 text-emerald-300' : 'bg-red-500/10 text-red-300'}`}
-                        >
-                          <span>{item.positive ? '✓' : '✗'}</span>
-                          {item.label}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === 'breakdown' && (
-                  <div className="space-y-3">
                     <div className="p-3 rounded-xl bg-slate-800/60 border border-white/5">
                       <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-1">Score reasoning</p>
-                      <p className="text-xs text-slate-300 leading-relaxed">
-                        Good overall fit. Client has a clear scope and solid hire history. Your rate is slightly above the Upwork median for React dashboards — consider tightening the range to increase win probability.
-                      </p>
+                      <p className="text-xs text-slate-300 leading-relaxed">Good overall fit. Client has a clear scope and solid hire history. Your rate is slightly above the Upwork median — consider tightening the range.</p>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="p-3 rounded-xl bg-slate-800/60 border border-white/5">
@@ -1183,51 +1095,53 @@ function DemoSection() {
                         <p className="text-sm font-bold text-emerald-400">High</p>
                       </div>
                     </div>
-                    <div className="p-3 rounded-xl bg-slate-800/60 border border-white/5">
-                      <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-1.5">Red flags</p>
-                      <p className="text-xs text-red-300">Budget slightly low for senior-level work</p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-slate-800/60 border border-white/5">
-                      <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-1.5">Green flags</p>
-                      <p className="text-xs text-emerald-300">Clear scope · Experienced client · Good hire history</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="p-3 rounded-xl bg-slate-800/60 border border-white/5">
+                        <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-1.5">Red flags</p>
+                        <p className="text-xs text-red-300">Budget slightly low for senior work</p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-slate-800/60 border border-white/5">
+                        <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-1.5">Green flags</p>
+                        <p className="text-xs text-emerald-300">Clear scope · Good hire history</p>
+                      </div>
                     </div>
                   </div>
                 )}
 
-                {activeTab === 'actions' && (
+                {activeTab === 'linkedin' && (
                   <div className="space-y-3">
-                    {[
-                      {
-                        action: 'Use the AI rewriter to generate a stronger cover letter for this job',
-                        impact: 'High',
-                        color: 'text-red-400 bg-red-500/10',
-                      },
-                      {
-                        action: 'Lower your rate by $5 to match Upwork median for this category',
-                        impact: 'Medium',
-                        color: 'text-amber-400 bg-amber-500/10',
-                      },
-                      {
-                        action: 'Add a specific deliverable or timeline to your proposal',
-                        impact: 'Medium',
-                        color: 'text-amber-400 bg-amber-500/10',
-                      },
-                      {
-                        action: 'High win probability — bid soon before competition increases',
-                        impact: 'Positive',
-                        color: 'text-emerald-400 bg-emerald-500/10',
-                      },
-                    ].map((item) => (
-                      <div
-                        key={item.action}
-                        className={`flex items-start gap-3 p-3 rounded-xl ${item.color}`}
-                      >
-                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-white/10 shrink-0 mt-0.5">
-                          {item.impact}
-                        </span>
-                        <p className="text-xs leading-relaxed">{item.action}</p>
+                    <div className="flex items-center gap-4 mb-2">
+                      <ScoreGauge score={82} size={90} />
+                      <div>
+                        <p className="text-white font-bold text-lg">Match Score: 82 / 100</p>
+                        <p className="text-slate-400 text-sm">Strong match — you meet most requirements</p>
+                        <span className="inline-block mt-1 px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-xs font-semibold">LinkedIn</span>
                       </div>
-                    ))}
+                    </div>
+                    <div className="p-3 rounded-xl bg-slate-800/60 border border-white/5">
+                      <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-2">Matched skills</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {['React', 'Node.js', 'TypeScript', 'REST APIs'].map((s) => (
+                          <span key={s} className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 text-[10px] font-semibold border border-emerald-500/20">{s}</span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-xl bg-slate-800/60 border border-white/5">
+                      <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-2">Skill gaps</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {['AWS', 'Docker'].map((s) => (
+                          <span key={s} className="px-2 py-0.5 rounded-full bg-red-500/15 text-red-300 text-[10px] font-semibold border border-red-500/20">{s}</span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20">
+                      <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-1">Application summary</p>
+                      <p className="text-xs text-slate-300 leading-relaxed">Strong full-stack background with 4+ years in React and Node.js. Highlight API integration experience — it directly matches what they need.</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-slate-800/60 border border-white/5">
+                      <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-1">CV tips</p>
+                      <p className="text-xs text-amber-300 leading-relaxed">Add any AWS or cloud deployment experience; mention Docker if used in past projects.</p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1254,11 +1168,11 @@ function PricingSection() {
       ctaVariant: 'secondary',
       popular: false,
       features: [
-        { text: '5 proposal scores per month', available: true },
-        { text: 'Bid score + reasoning + bid range', available: true },
-        { text: 'Upwork rate benchmarking', available: true },
-        { text: 'Bid history (last 5)', available: true },
-        { text: 'Proposal rewriter', available: false },
+        { text: '5 analyses per month', available: true },
+        { text: 'Upwork bid score + rate range', available: true },
+        { text: 'LinkedIn CV match score', available: true },
+        { text: 'CV upload & auto-profile', available: true },
+        { text: 'AI cover letter & CV tips', available: false },
         { text: 'Win probability', available: false },
         { text: 'Priority support', available: false },
       ],
@@ -1266,17 +1180,17 @@ function PricingSection() {
     {
       name: 'Pro',
       price: { monthly: 9, annual: 7 },
-      desc: 'For active freelancers bidding every day.',
+      desc: 'For active freelancers bidding and applying every day.',
       cta: 'Start Pro — Free 7-day trial',
       ctaVariant: 'primary',
       popular: true,
       features: [
-        { text: 'Unlimited proposal scores', available: true },
-        { text: 'Bid score + reasoning + bid range', available: true },
-        { text: 'Upwork rate benchmarking', available: true },
-        { text: 'Full bid history', available: true },
-        { text: 'AI proposal rewriter', available: true },
+        { text: '100 analyses per month', available: true },
+        { text: 'Upwork bid score + rate range', available: true },
+        { text: 'LinkedIn CV match score', available: true },
+        { text: 'AI cover letter & CV tips', available: true },
         { text: 'Win probability', available: true },
+        { text: 'Full analysis history', available: true },
         { text: 'Priority support', available: false },
       ],
     },
@@ -1290,9 +1204,9 @@ function PricingSection() {
       features: [
         { text: 'Everything in Pro', available: true },
         { text: '500 analyses per month', available: true },
-        { text: 'AI proposal rewriter', available: true },
+        { text: 'AI cover letter & CV tips', available: true },
         { text: 'Win probability per bid', available: true },
-        { text: 'Full bid history', available: true },
+        { text: 'Full analysis history', available: true },
         { text: 'Upwork rate benchmarking', available: true },
         { text: 'Priority support', available: true },
       ],
@@ -1513,8 +1427,8 @@ function FAQSection() {
       a: 'Right now FreelanceIQ works with Upwork and LinkedIn. On Upwork you get instant bid scoring and rate benchmarking. On LinkedIn you get CV-matched job analysis — see your match score, skill gaps, and a tailored application summary. Support for additional platforms is on our roadmap.',
     },
     {
-      q: 'How does the AI score my proposal?',
-      a: "FreelanceIQ's AI reads your proposal alongside the job description and produces an overall 0–100 bid score, a plain-English explanation of what drove it, a suggested bid range calibrated to real Upwork market data for that skill, and a Low/Medium/High win probability. For LinkedIn jobs, it matches your uploaded CV against the role's requirements and produces a match score, skill gaps, strengths, and a ready-to-use application summary.",
+      q: 'How does the AI score my proposal or match my CV?',
+      a: "For Upwork: FreelanceIQ's AI reads the job description against your profile and produces a 0–100 bid score, a plain-English explanation, a suggested bid range calibrated to real Upwork market data, and a Low/Medium/High win probability — plus an AI-written cover letter. For LinkedIn: it matches your uploaded CV against the role's requirements and produces a match score, matched skills, skill gaps, key strengths, a tailored application summary, and downloadable CV improvement tips.",
     },
     {
       q: 'Will the rewriter change my writing style?',
@@ -1522,7 +1436,7 @@ function FAQSection() {
     },
     {
       q: 'Is there a free plan?',
-      a: 'Yes. The free plan lets you score 5 proposals per month — you get the full bid score, score reasoning, bid range, win probability, and rate benchmarking — no credit card required. You can upgrade to Pro any time to get unlimited scores and the AI proposal rewriter.',
+      a: 'Yes. The free plan gives you 5 analyses per month — covering both Upwork bid scoring and LinkedIn CV matching — with no credit card required. You get the bid score, score reasoning, bid range, CV match score, and matched skills. Upgrade to Pro for 100 analyses per month plus AI cover letters, CV tips, and win probability.',
     },
     {
       q: 'How is FreelanceIQ different from just asking ChatGPT?',
@@ -1598,11 +1512,11 @@ function CtaSection() {
           <h2 className="text-4xl sm:text-6xl font-black text-white tracking-tight mt-6 mb-4">
             Stop guessing.
             <br />
-            Start winning bids.
+            Start winning.
           </h2>
           <p className="text-slate-300 text-lg mb-10 leading-relaxed">
-            Join freelancers who use FreelanceIQ to score every proposal on Upwork and match jobs on
-            LinkedIn before applying.
+            Upload your CV, install the extension, and let FreelanceIQ score every Upwork bid and
+            match every LinkedIn job — before you apply.
           </p>
         </div>
         <div className="reveal reveal-delay-2 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -1654,8 +1568,7 @@ function Footer() {
               </span>
             </div>
             <p className="text-slate-400 text-sm leading-relaxed max-w-xs mb-6">
-              AI-powered proposal scoring for Upwork and LinkedIn job matching. Score your bid or
-              match your CV before you apply.
+              AI-powered bid scoring for Upwork and CV matching for LinkedIn. Upload your CV once — FreelanceIQ handles the rest.
             </p>
             <div className="flex gap-3">
               {['twitter', 'linkedin'].map((social) => (

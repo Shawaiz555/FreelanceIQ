@@ -34,7 +34,7 @@ async function withRetry(fn, maxAttempts = 3) {
 
 // ─── JSON chat helper ─────────────────────────────────────────────────────────
 
-async function chatJSON(messages, responseSchema, model = 'gpt-4o-mini') {
+async function chatJSON(messages, responseSchema, model = 'gpt-4o-mini', maxTokens = 2000) {
   return withRetry(async () => {
     const client = getClient();
     const completion = await client.chat.completions.create({
@@ -42,14 +42,19 @@ async function chatJSON(messages, responseSchema, model = 'gpt-4o-mini') {
       response_format: { type: 'json_object' },
       messages,
       temperature: 0.2,
+      max_tokens: maxTokens,
     });
 
-    const raw = completion.choices[0].message.content;
+    const choice = completion.choices[0];
+    if (choice.finish_reason === 'length') {
+      console.error('[OpenAI] Response truncated by token limit. Increase max_tokens or reduce input.');
+    }
+    const raw = choice.message.content;
     let parsed;
     try {
       parsed = JSON.parse(raw);
     } catch {
-      throw new Error(`OpenAI returned invalid JSON: ${raw}`);
+      throw new Error(`OpenAI returned invalid JSON (finish_reason=${choice.finish_reason}): ${raw.slice(0, 200)}`);
     }
 
     const result = responseSchema.safeParse(parsed);
@@ -131,7 +136,7 @@ Base the bid range on: market rates, job budget, competition level, and the free
     {
       role: 'user',
       content: `Job: ${title}
-Description snippet: ${description.slice(0, 500)}
+Description: ${description.slice(0, 2000)}
 Budget: $${budget_min}–$${budget_max}
 Category: ${category}
 Competition: ${competition_level}
@@ -191,7 +196,7 @@ Rules:
       role: 'user',
       content: `Write a cover letter for this ${platform} job:
 Title: ${title}
-Description: ${description.slice(0, 1000)}
+Description: ${description.slice(0, 2500)}
 Category: ${category}
 Win probability: ${win_probability}
 Green flags (use as selling points): ${green_flags.join(', ') || 'None'}
@@ -272,73 +277,91 @@ ${cvSection}`,
   return chatJSON(messages, MatchSchema);
 }
 
-// ─── generateTailoredCV ───────────────────────────────────────────────────────
+// ─── generateCVGuidance ───────────────────────────────────────────────────────
 //
-// Used for LinkedIn jobs: rewrites the candidate's CV text to maximise relevance
-// for the target job, preserving the EXACT structure, section names, ordering,
-// and formatting of the original CV — only content is updated.
+// Used for LinkedIn jobs: analyses the candidate's CV against the job and returns
+// detailed, actionable guidance on how to improve/tailor their CV themselves.
 
-const TailoredCVSchema = z.object({
-  cv_text: z.string().min(100),
+const CVGuidanceSchema = z.object({
+  overall_assessment: z.string().default(''),
+  priority_changes: z.array(z.object({
+    section: z.string(),
+    issue: z.string(),
+    action: z.string(),
+    example: z.string().optional().default(''),
+  })).default([]),
+  keywords_to_add: z.array(z.string()).default([]),
+  keywords_to_emphasise: z.array(z.string()).default([]),
+  // AI sometimes returns an object keyed by section name instead of an array — normalise with preprocess
+  sections_to_improve: z.preprocess((val) => {
+    if (!val) return [];
+    if (Array.isArray(val)) return val;
+    if (typeof val === 'object') {
+      return Object.entries(val).map(([key, v]) => ({
+        section: (v && typeof v === 'object' && v.section) ? String(v.section) : key,
+        current_weakness: (v && typeof v === 'object' && v.current_weakness) ? String(v.current_weakness) : '',
+        how_to_fix: (v && typeof v === 'object' && v.how_to_fix) ? String(v.how_to_fix) : '',
+      }));
+    }
+    return [];
+  }, z.array(z.object({
+    section: z.string(),
+    current_weakness: z.string(),
+    how_to_fix: z.string(),
+  })).default([])),
+  ats_tips: z.array(z.string()).default([]),
+  summary_rewrite_hint: z.string().default(''),
 });
 
-async function generateTailoredCV(jobData, userProfile) {
+async function generateCVGuidance(jobData, userProfile) {
   const { title: jobTitle, description, company, skills_required, seniority_level } = jobData;
 
-  const hasCv = !!(userProfile.cv_text && userProfile.cv_text.trim().length > 50);
-
-  const cvSource = hasCv
-    ? userProfile.cv_text.slice(0, 8000)
+  const cvSource = userProfile.cv_text && userProfile.cv_text.trim().length > 50
+    ? userProfile.cv_text.slice(0, 6000)
     : [
-        `${userProfile.name || 'Candidate'}`,
-        userProfile.title ? userProfile.title : '',
-        userProfile.bio ? `\nSUMMARY\n${userProfile.bio}` : '',
-        (userProfile.skills || []).length
-          ? `\nSKILLS\n${userProfile.skills.join(', ')}` : '',
-        userProfile.experience_years
-          ? `\nEXPERIENCE\n${userProfile.experience_years} years of experience` : '',
-        (userProfile.education || []).length
-          ? `\nEDUCATION\n${userProfile.education.join('\n')}` : '',
-        (userProfile.certifications || []).length
-          ? `\nCERTIFICATIONS\n${userProfile.certifications.join('\n')}` : '',
-      ].filter(Boolean).join('\n');
+        userProfile.title || '',
+        userProfile.bio ? `SUMMARY\n${userProfile.bio}` : '',
+        (userProfile.skills || []).length ? `SKILLS\n${userProfile.skills.join(', ')}` : '',
+        userProfile.experience_years ? `EXPERIENCE: ${userProfile.experience_years} years` : '',
+      ].filter(Boolean).join('\n') || 'No CV uploaded';
 
   const messages = [
     {
       role: 'system',
-      content: `You are an expert CV writer. Your task is to rewrite a candidate's CV to maximise their chances for a specific job.
+      content: `You are a professional career coach and CV expert. Analyse the candidate's CV against a specific job posting and give them clear, actionable guidance so they can tailor their CV themselves.
 
-STRICT RULES — follow every one of these:
-1. PRESERVE the exact structure: keep every section heading exactly as written (e.g. if original says "WORK EXPERIENCE" keep that, not "Experience"), keep the same section order, keep the same layout style (bullet points stay bullet points, paragraphs stay paragraphs)
-2. DO NOT add or remove sections
-3. DO NOT fabricate any company names, job titles, dates, degrees, or institutions — only use what exists in the original CV
-4. DO rewrite bullet points and descriptions to emphasise skills and achievements most relevant to the target job
-5. DO update the professional summary/objective (if present) to directly address the target job requirements
-6. DO reorder skill lists so the most relevant skills appear first
-7. Keep all dates, company names, job titles, and qualifications EXACTLY as they appear in the source
-8. Output the full rewritten CV as plain text, using the same whitespace/newline conventions as the original
-
-Return a JSON object with a single field:
-- cv_text: the complete rewritten CV as a plain text string`,
+Return a JSON object with:
+- overall_assessment: 2-3 sentence honest summary of how well their current CV matches this job and the main gaps
+- priority_changes: array of the top 3-5 most impactful changes, each with:
+    - section: which CV section to change (e.g. "Summary", "Experience — Job Title", "Skills")
+    - issue: what is currently wrong or missing
+    - action: exactly what to do (be specific and actionable)
+    - example: a concrete example of improved text (optional but very helpful)
+- keywords_to_add: job keywords/phrases completely missing from their CV that ATS systems will scan for (max 10)
+- keywords_to_emphasise: keywords present in their CV but need to be more prominent or reworded (max 8)
+- sections_to_improve: each section needing work, with specific how-to-fix advice
+- ats_tips: 3-5 ATS/formatting tips specific to their CV (e.g. missing metrics, weak action verbs, formatting issues)
+- summary_rewrite_hint: a suggested opening sentence or angle for their summary section targeted at this job`,
     },
     {
       role: 'user',
-      content: `Target job: ${jobTitle}
+      content: `TARGET JOB:
+Title: ${jobTitle}
 Company: ${company || 'Not specified'}
 Seniority: ${seniority_level || 'Not specified'}
 Required skills: ${(skills_required || []).join(', ') || 'Not listed'}
 
 Job description:
-${description.slice(0, 2000)}
+${description.slice(0, 2500)}
 
 ---
 
-ORIGINAL CV (rewrite this — preserve structure, update content):
+CANDIDATE'S CURRENT CV:
 ${cvSource}`,
     },
   ];
 
-  return chatJSON(messages, TailoredCVSchema, 'gpt-4o-mini');
+  return chatJSON(messages, CVGuidanceSchema, 'gpt-4o-mini', 4000);
 }
 
 // ─── extractProfileFromCV ─────────────────────────────────────────────────────
@@ -403,4 +426,4 @@ Be conservative — omit a field rather than guess. Do not hallucinate URLs or c
   return chatJSON(messages, CVProfileSchema);
 }
 
-module.exports = { classifyJob, scoreBid, generateProposal, matchJobToProfile, generateTailoredCV, extractProfileFromCV };
+module.exports = { classifyJob, scoreBid, generateProposal, matchJobToProfile, generateCVGuidance, extractProfileFromCV };

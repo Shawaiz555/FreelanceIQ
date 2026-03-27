@@ -30,6 +30,9 @@ const userSchema = new mongoose.Schema(
       cv_text: { type: String, default: '', maxlength: 20000 },
       cv_filename: { type: String, default: '' },
       cv_uploaded_at: { type: Date, default: null },
+      // Original CV file stored as Base64 — used to reconstruct DOCX with original formatting
+      cv_file: { type: String, default: '' },       // Base64-encoded file buffer (max ~7MB)
+      cv_mimetype: { type: String, default: '' },   // 'application/pdf' or 'application/vnd.openxmlformats...'
       // Extended professional profile fields (populated from CV extraction)
       location: { type: String, default: '' },
       linkedin_url: { type: String, default: '' },

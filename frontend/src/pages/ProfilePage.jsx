@@ -169,6 +169,16 @@ export default function ProfilePage() {
     if (fieldErrors[name]) setFieldErrors((prev) => ({ ...prev, [name]: null }));
   };
 
+  const URL_FIELDS = ['linkedin_url', 'github_url', 'website_url', 'upwork_url'];
+  const handleUrlBlur = (e) => {
+    const { name, value } = e.target;
+    if (!URL_FIELDS.includes(name)) return;
+    const trimmed = value.trim();
+    if (trimmed && !/^https?:\/\//i.test(trimmed)) {
+      setForm((prev) => ({ ...prev, [name]: 'https://' + trimmed }));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -496,18 +506,18 @@ export default function ProfilePage() {
         >
           <div className="space-y-4">
             <Field label="LinkedIn URL" error={fieldErrors.linkedin_url}>
-              <input id="linkedin_url" name="linkedin_url" type="url" value={form.linkedin_url} onChange={handleChange} placeholder="https://linkedin.com/in/yourname" className={inputCls(fieldErrors.linkedin_url)} />
+              <input id="linkedin_url" name="linkedin_url" type="url" value={form.linkedin_url} onChange={handleChange} onBlur={handleUrlBlur} placeholder="https://linkedin.com/in/yourname" className={inputCls(fieldErrors.linkedin_url)} />
             </Field>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="GitHub URL" error={fieldErrors.github_url}>
-                <input id="github_url" name="github_url" type="url" value={form.github_url} onChange={handleChange} placeholder="https://github.com/yourname" className={inputCls(fieldErrors.github_url)} />
+                <input id="github_url" name="github_url" type="url" value={form.github_url} onChange={handleChange} onBlur={handleUrlBlur} placeholder="https://github.com/yourname" className={inputCls(fieldErrors.github_url)} />
               </Field>
               <Field label="Website / Portfolio" error={fieldErrors.website_url}>
-                <input id="website_url" name="website_url" type="url" value={form.website_url} onChange={handleChange} placeholder="https://yoursite.com" className={inputCls(fieldErrors.website_url)} />
+                <input id="website_url" name="website_url" type="url" value={form.website_url} onChange={handleChange} onBlur={handleUrlBlur} placeholder="https://yoursite.com" className={inputCls(fieldErrors.website_url)} />
               </Field>
             </div>
             <Field label="Upwork profile URL" error={fieldErrors.upwork_url}>
-              <input id="upwork_url" name="upwork_url" type="url" value={form.upwork_url} onChange={handleChange} placeholder="https://www.upwork.com/freelancers/yourname" className={inputCls(fieldErrors.upwork_url)} />
+              <input id="upwork_url" name="upwork_url" type="url" value={form.upwork_url} onChange={handleChange} onBlur={handleUrlBlur} placeholder="https://www.upwork.com/freelancers/yourname" className={inputCls(fieldErrors.upwork_url)} />
             </Field>
           </div>
         </ProfileSection>

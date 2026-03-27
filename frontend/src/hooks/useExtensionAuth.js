@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { setCredentials, setExtensionAuthReady } from '../store/slices/authSlice';
+import { setCredentials, setExtensionAuthReady, logout } from '../store/slices/authSlice';
 
 export default function useExtensionAuth() {
   const dispatch = useDispatch();
@@ -89,6 +89,19 @@ export default function useExtensionAuth() {
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
   }, [isAuthenticated, token, user]);
+
+  // ── Extension Logout → App ───────────────────────────────────────────────────
+  // When the user signs out from the extension popup, log the web app out too.
+  useEffect(() => {
+    function onMessage(event) {
+      if (!event.data || event.data.source !== 'fiq-extension') return;
+      if (event.data.type === 'FIQ_FORCE_LOGOUT') {
+        dispatch(logout());
+      }
+    }
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [dispatch]);
 
   // ── App Logout → Extension ───────────────────────────────────────────────────
   // When the app logs out, clear the extension's stored auth too.

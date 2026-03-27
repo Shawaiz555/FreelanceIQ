@@ -1,7 +1,7 @@
 const connectDB = require('../lib/db');
 const Analysis = require('../lib/models/Analysis');
 const User = require('../lib/models/User');
-const { classifyJob, scoreBid, generateProposal, matchJobToProfile, generateTailoredCV } = require('../lib/services/openai.service');
+const { classifyJob, scoreBid, generateProposal, matchJobToProfile, generateCVGuidance } = require('../lib/services/openai.service');
 const { enrichJobWithPricing } = require('../lib/services/pricing.service');
 const { getCached, setCached } = require('../lib/redis');
 const { AppError, withErrorHandler, withAuth, withRateLimit } = require('../lib/withMiddleware');
@@ -47,21 +47,21 @@ async function checkQuota(user) {
 // ─── LinkedIn job-match pipeline ──────────────────────────────────────────────
 
 async function runJobMatchPipeline(jobData, fullUser) {
-  // Run match analysis and tailored CV generation in parallel.
-  // CV generation is non-fatal — a failure there must not block the match result.
-  const [matchResult, cvResult] = await Promise.allSettled([
+  // Run match analysis and CV guidance in parallel.
+  // CV guidance is non-fatal — a failure there must not block the match result.
+  const [matchResult, guidanceResult] = await Promise.allSettled([
     matchJobToProfile(jobData, fullUser.profile),
-    generateTailoredCV(jobData, { ...fullUser.profile, name: fullUser.name }),
+    generateCVGuidance(jobData, { ...fullUser.profile, name: fullUser.name }),
   ]);
 
   if (matchResult.status === 'rejected') throw matchResult.reason;
 
   const { data: matchData, tokensUsed: t1 } = matchResult.value;
-  const cvText = cvResult.status === 'fulfilled' ? cvResult.value.data.cv_text : '';
-  const t2 = cvResult.status === 'fulfilled' ? cvResult.value.tokensUsed : 0;
+  const guidanceData = guidanceResult.status === 'fulfilled' ? guidanceResult.value.data : null;
+  const t2 = guidanceResult.status === 'fulfilled' ? guidanceResult.value.tokensUsed : 0;
 
-  if (cvResult.status === 'rejected') {
-    console.error('[JobMatch] CV generation failed (non-fatal):', cvResult.reason?.message);
+  if (guidanceResult.status === 'rejected') {
+    console.error('[JobMatch] CV guidance failed (non-fatal):', guidanceResult.reason?.message);
   }
 
   const savedAnalysis = await Analysis.create({
@@ -96,7 +96,7 @@ async function runJobMatchPipeline(jobData, fullUser) {
       template_used: 'job-match',
       word_count: matchData.application_summary.trim().split(/\s+/).length,
     },
-    generated_cv: cvText,
+    cv_guidance: guidanceData,
     ai_tokens_used: t1 + t2,
   });
 
