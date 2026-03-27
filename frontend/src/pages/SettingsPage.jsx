@@ -153,10 +153,12 @@ export default function SettingsPage() {
 
   // Detect extension + ask it to report its current auto-open state
   useEffect(() => {
+    let gotState = false;
     const handler = (event) => {
       if (event.data?.source === 'fiq-extension') {
         if (event.data?.type === 'FIQ_EXTENSION_INSTALLED') setExtensionInstalled(true);
         if (event.data?.type === 'FIQ_AUTO_OPEN_STATE' && typeof event.data.value === 'boolean') {
+          gotState = true;
           setAutoOpen(event.data.value);
         }
       }
@@ -164,7 +166,14 @@ export default function SettingsPage() {
     window.addEventListener('message', handler);
     window.postMessage({ type: 'FIQ_PING_REQUEST' }, '*');
     window.postMessage({ type: 'FIQ_GET_AUTO_OPEN' }, '*');
-    return () => window.removeEventListener('message', handler);
+    // Retry once after a short delay in case the content script wasn't ready yet
+    const retryTimer = setTimeout(() => {
+      if (!gotState) window.postMessage({ type: 'FIQ_GET_AUTO_OPEN' }, '*');
+    }, 300);
+    return () => {
+      window.removeEventListener('message', handler);
+      clearTimeout(retryTimer);
+    };
   }, []);
 
   const handleAutoOpenChange = (value) => {

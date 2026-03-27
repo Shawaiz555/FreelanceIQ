@@ -636,9 +636,11 @@ var sidebarFrameLoaded = false; // true once the sidebar iframe fires its load e
 var currentUrl = location.href;
 var _autoOpenEnabled = true; // cached fiq_auto_open setting — read once at startup
 
-// Read the auto-open setting once, synchronously available for all subsequent init() calls
-chrome.storage.local.get(['fiq_auto_open'], function (r) {
-  _autoOpenEnabled = r.fiq_auto_open !== false;
+// Keep _autoOpenEnabled in sync whenever any context (popup, web app) changes storage
+chrome.storage.onChanged.addListener(function (changes, area) {
+  if (area === 'local' && 'fiq_auto_open' in changes) {
+    _autoOpenEnabled = changes.fiq_auto_open.newValue !== false;
+  }
 });
 
 // ─── Job extraction with retry ────────────────────────────────────────────────
@@ -1638,69 +1640,75 @@ function isJobPage() {
   return isUpworkJobPage() || isLinkedInJobPage();
 }
 
-function init() {
-  // On the FreelanceIQ web app — just broadcast presence, no sidebar needed
-  if (isFreelanceIQApp()) {
-    // Handle messages from background — only registered on the FreelanceIQ app page.
-    chrome.runtime.onMessage.addListener(function (message, _sender, sendResponse) {
-      if (message.type === 'FIQ_READ_LOCALSTORAGE_AUTH') {
-        try {
-          var token = localStorage.getItem('fiq_access_token');
-          var userRaw = localStorage.getItem('fiq_user');
-          var user = userRaw ? JSON.parse(userRaw) : null;
-          sendResponse((token && user) ? { token: token, user: user } : null);
-        } catch (_) {
-          sendResponse(null);
-        }
-        return true;
+// ─── FreelanceIQ web app bridge ───────────────────────────────────────────────
+// Registered immediately (synchronously) so the message listener is ready
+// before the page's useEffect fires FIQ_PING_REQUEST / FIQ_GET_AUTO_OPEN.
+if (isFreelanceIQApp()) {
+  // Handle messages from background service worker
+  chrome.runtime.onMessage.addListener(function (message, _sender, sendResponse) {
+    if (message.type === 'FIQ_READ_LOCALSTORAGE_AUTH') {
+      try {
+        var token = localStorage.getItem('fiq_access_token');
+        var userRaw = localStorage.getItem('fiq_user');
+        var user = userRaw ? JSON.parse(userRaw) : null;
+        sendResponse((token && user) ? { token: token, user: user } : null);
+      } catch (_) {
+        sendResponse(null);
       }
-      if (message.type === 'FIQ_PUSH_AUTH' && message.payload) {
-        // Extension just logged in — tell the web app page to pick up the auth
-        window.postMessage({
-          source: 'fiq-extension',
-          type: 'FIQ_AUTH_RESPONSE',
-          payload: { token: message.payload.token, user: message.payload.user },
-        }, '*');
-        sendResponse({ ok: true });
-        return true;
-      }
-      if (message.type === 'FIQ_PUSH_LOGOUT') {
-        // Extension just logged out — tell the web app to log out too
-        window.postMessage({ source: 'fiq-extension', type: 'FIQ_FORCE_LOGOUT' }, '*');
-        sendResponse({ ok: true });
-        return true;
-      }
-    });
+      return true;
+    }
+    if (message.type === 'FIQ_PUSH_AUTH' && message.payload) {
+      window.postMessage({
+        source: 'fiq-extension',
+        type: 'FIQ_AUTH_RESPONSE',
+        payload: { token: message.payload.token, user: message.payload.user },
+      }, '*');
+      sendResponse({ ok: true });
+      return true;
+    }
+    if (message.type === 'FIQ_PUSH_LOGOUT') {
+      window.postMessage({ source: 'fiq-extension', type: 'FIQ_FORCE_LOGOUT' }, '*');
+      sendResponse({ ok: true });
+      return true;
+    }
+  });
 
-    pingFreelanceIQApp();
-    // Re-ping on SPA route changes (React Router uses pushState)
-    var _origPush = history.pushState.bind(history);
-    history.pushState = function () {
-      _origPush.apply(history, arguments);
-      setTimeout(pingFreelanceIQApp, 50);
-    };
-    window.addEventListener('popstate', pingFreelanceIQApp);
-    // Respond to requests from the page
-    window.addEventListener('message', function (e) {
-      if (!e.data) return;
-      if (e.data.type === 'FIQ_PING_REQUEST') pingFreelanceIQApp();
-      if (e.data.type === 'FIQ_GET_AUTH') handleGetAuth();
-      if (e.data.type === 'FIQ_SET_AUTH' && e.data.payload) {
-        chrome.runtime.sendMessage({ type: 'SET_AUTH', payload: e.data.payload }).catch(function () {});
-      }
-      if (e.data.type === 'FIQ_LOGOUT') {
-        chrome.runtime.sendMessage({ type: 'LOGOUT' }).catch(function () {});
-      }
-      if (e.data.type === 'FIQ_SET_AUTO_OPEN' && typeof e.data.value === 'boolean') {
-        _autoOpenEnabled = e.data.value;
-        chrome.storage.local.set({ fiq_auto_open: e.data.value });
-      }
-      if (e.data.type === 'FIQ_GET_AUTO_OPEN') {
+  // Respond to postMessages from the page
+  window.addEventListener('message', function (e) {
+    if (!e.data) return;
+    if (e.data.type === 'FIQ_PING_REQUEST') pingFreelanceIQApp();
+    if (e.data.type === 'FIQ_GET_AUTH') handleGetAuth();
+    if (e.data.type === 'FIQ_SET_AUTH' && e.data.payload) {
+      chrome.runtime.sendMessage({ type: 'SET_AUTH', payload: e.data.payload }).catch(function () {});
+    }
+    if (e.data.type === 'FIQ_LOGOUT') {
+      chrome.runtime.sendMessage({ type: 'LOGOUT' }).catch(function () {});
+    }
+    if (e.data.type === 'FIQ_SET_AUTO_OPEN' && typeof e.data.value === 'boolean') {
+      _autoOpenEnabled = e.data.value;
+      chrome.storage.local.set({ fiq_auto_open: e.data.value });
+    }
+    if (e.data.type === 'FIQ_GET_AUTO_OPEN') {
+      // Read from storage directly to guarantee accuracy regardless of init timing
+      chrome.storage.local.get(['fiq_auto_open'], function (r) {
+        _autoOpenEnabled = r.fiq_auto_open !== false;
         window.postMessage({ source: 'fiq-extension', type: 'FIQ_AUTO_OPEN_STATE', value: _autoOpenEnabled }, '*');
-      }
-    });
-    return;
-  }
+      });
+    }
+  });
+
+  pingFreelanceIQApp();
+  // Re-ping on SPA route changes (React Router uses pushState)
+  var _origPush = history.pushState.bind(history);
+  history.pushState = function () {
+    _origPush.apply(history, arguments);
+    setTimeout(pingFreelanceIQApp, 50);
+  };
+  window.addEventListener('popstate', pingFreelanceIQApp);
+}
+
+function init() {
+  if (isFreelanceIQApp()) return; // all web app logic handled above
 
   if (!isJobPage()) return;
   if (document.getElementById('fiq-sidebar-frame')) return;
@@ -1718,11 +1726,16 @@ function init() {
   watchForJobPanelOpen();
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init();
-}
+// Read the auto-open setting before init() so _autoOpenEnabled is correct
+// when createSidebarFrame's load handler fires.
+chrome.storage.local.get(['fiq_auto_open'], function (r) {
+  _autoOpenEnabled = r.fiq_auto_open !== false;
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+});
 
 // ─── Re-injection guard ───────────────────────────────────────────────────────
 // LinkedIn (and some SPAs) may replace document.body during hydration, which

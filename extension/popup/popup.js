@@ -151,6 +151,14 @@ $('auto-open-toggle').addEventListener('click', () => {
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== 'local') return;
+
+  // Sync auto-open toggle if changed by content.js or settings page
+  if (changes.fiq_auto_open) {
+    const toggle = $('auto-open-toggle');
+    const isOn = changes.fiq_auto_open.newValue !== false;
+    toggle.classList.toggle('on', isOn);
+  }
+
   if (!changes.fiq_token && !changes.fiq_user) return;
 
   // Re-read auth and update popup view
