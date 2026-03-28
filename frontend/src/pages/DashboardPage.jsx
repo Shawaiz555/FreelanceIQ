@@ -324,12 +324,12 @@ export default function DashboardPage() {
                   <Link
                     key={analysis._id}
                     to={`/analysis/${analysis._id}`}
-                    className="flex items-center gap-4 px-6 py-4 transition-all duration-200 group hover:bg-slate-50/80 border-l-2 border-transparent hover:border-indigo-500"
+                    className="flex items-center gap-3 px-4 py-4 sm:px-6 transition-all duration-200 group hover:bg-slate-50/80 border-l-2 border-transparent hover:border-indigo-500"
                   >
                     <div className="shrink-0 transition-transform duration-300 group-hover:scale-105">
                       <BidScoreGauge
                         score={score}
-                        size={52}
+                        size={48}
                         strokeWidth={4.5}
                         showLabel={false}
                         animate={false}
@@ -340,16 +340,23 @@ export default function DashboardPage() {
                       <p className="text-sm font-bold text-slate-900 truncate">
                         {analysis.job.title}
                       </p>
-                      <p className="text-xs text-slate-400 mt-1 capitalize">
+                      <p className="text-xs text-slate-400 mt-1 capitalize truncate">
                         {analysis.job.platform}
                         {analysis.analysis_type !== 'job_match' && ` · $${analysis.result?.bid_min}–$${analysis.result?.bid_max}`}
                         {' · '}{new Date(analysis.created_at).toLocaleDateString()}
                       </p>
+                      <span
+                        className="mt-1.5 inline-flex text-[9px] font-black px-2 py-0.5 rounded-lg items-center gap-1 uppercase tracking-wider sm:hidden"
+                        style={{ background: ws.bg, border: `1px solid ${ws.border}`, color: ws.text }}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: ws.dot }} />
+                        {label}
+                      </span>
                     </div>
 
-                    <div className="shrink-0 flex items-center gap-2.5">
+                    <div className="shrink-0 flex items-center gap-2">
                       <span
-                        className="text-[10px] font-black px-2.5 py-1 rounded-lg flex items-center gap-1.5 uppercase tracking-wider"
+                        className="hidden sm:flex text-[10px] font-black px-2.5 py-1 rounded-lg items-center gap-1.5 uppercase tracking-wider"
                         style={{ background: ws.bg, border: `1px solid ${ws.border}`, color: ws.text }}
                       >
                         <span className="w-1.5 h-1.5 rounded-full" style={{ background: ws.dot }} />

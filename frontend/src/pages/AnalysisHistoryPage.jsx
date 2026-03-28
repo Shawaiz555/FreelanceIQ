@@ -240,16 +240,16 @@ export default function AnalysisHistoryPage() {
               >
                 <Link
                   to={`/analysis/${analysis._id}`}
-                  className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50/80 transition-all duration-200 border-l-2 border-transparent hover:border-indigo-500 pr-14"
+                  className="flex items-center gap-3 px-4 py-4 sm:px-6 hover:bg-slate-50/80 transition-all duration-200 border-l-2 border-transparent hover:border-indigo-500 pr-10 sm:pr-14"
                 >
                   {/* Score gauge */}
                   <div className="shrink-0 transition-transform duration-300 group-hover:scale-105">
-                    <BidScoreGauge score={score} size={52} strokeWidth={4.5} showLabel={false} animate={false} />
+                    <BidScoreGauge score={score} size={48} strokeWidth={4.5} showLabel={false} animate={false} />
                   </div>
 
                   {/* Title + meta */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                    <div className="flex items-center gap-2 mb-0.5">
                       <p className="text-sm font-bold text-slate-900 truncate group-hover:text-indigo-700 transition-colors">
                         {analysis.job.title}
                       </p>
@@ -259,17 +259,35 @@ export default function AnalysisHistoryPage() {
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-slate-400 capitalize">
+                    <p className="text-xs text-slate-400 capitalize truncate">
                       {analysis.job.platform}
                       {isMatch
                         ? analysis.job.company ? ` · ${analysis.job.company}` : ''
                         : analysis.result?.bid_min ? ` · $${analysis.result.bid_min}–$${analysis.result.bid_max}` : ''}
                       {' · '}{new Date(analysis.created_at).toLocaleDateString()}
                     </p>
+                    {/* Badge shown inline below meta on mobile */}
+                    <div className="flex items-center gap-1.5 mt-1.5 sm:hidden flex-wrap">
+                      <span
+                        className="text-[9px] font-black px-2 py-0.5 rounded-lg inline-flex items-center gap-1 uppercase tracking-wider"
+                        style={{ background: bc.bg, border: `1px solid ${bc.border}`, color: bc.text }}>
+                        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: bc.dot }} />
+                        {label}
+                      </span>
+                      {!isMatch && analysis.outcome?.did_bid && (() => {
+                        const oc = OUTCOME_COLORS[String(analysis.outcome.did_win)] || OUTCOME_COLORS.null;
+                        return (
+                          <span className="text-[9px] font-black px-2 py-0.5 rounded-lg uppercase tracking-wider"
+                            style={{ background: oc.bg, border: `1px solid ${oc.border}`, color: oc.text }}>
+                            {oc.label}
+                          </span>
+                        );
+                      })()}
+                    </div>
                   </div>
 
-                  {/* Badges + arrow */}
-                  <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                  {/* Badges + arrow — hidden on mobile, shown on sm+ */}
+                  <div className="hidden sm:flex items-center gap-2 shrink-0 flex-wrap justify-end">
                     <span
                       className="text-[10px] font-black px-2.5 py-1 rounded-lg flex items-center gap-1.5 uppercase tracking-wider"
                       style={{ background: bc.bg, border: `1px solid ${bc.border}`, color: bc.text }}>
@@ -285,12 +303,12 @@ export default function AnalysisHistoryPage() {
                         </span>
                       );
                     })()}
-                    <svg
-                      className="w-4 h-4 text-slate-300 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all duration-300"
-                      fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
                   </div>
+                  <svg
+                    className="w-4 h-4 shrink-0 text-slate-300 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all duration-300"
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
                 </Link>
 
                 {/* Delete button */}

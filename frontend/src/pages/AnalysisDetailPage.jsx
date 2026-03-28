@@ -78,6 +78,74 @@ function Chip({ children, color = 'slate' }) {
   );
 }
 
+// ─── Job description with show more/less ─────────────────────────────────────
+
+function JobDescription({ text }) {
+  const [expanded, setExpanded] = useState(false);
+  // Collapse 2+ consecutive blank lines into one to remove LinkedIn's excessive spacing
+  const normalized = text.replace(/\n{3,}/g, '\n\n').trim();
+  const LIMIT = 300;
+  const isLong = normalized.length > LIMIT;
+
+  return (
+    <div className="mt-4 border-t border-slate-100 pt-4">
+      <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+        {isLong && !expanded ? normalized.slice(0, LIMIT).trimEnd() + '…' : normalized}
+      </p>
+      {isLong && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="mt-2 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors flex items-center gap-1"
+        >
+          {expanded ? 'Show less' : 'Show more'}
+          <svg
+            className={`w-3.5 h-3.5 transition-transform ${expanded ? 'rotate-180' : ''}`}
+            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ─── About the company (expandable) ──────────────────────────────────────────
+
+function CompanyDescription({ text, company }) {
+  const [expanded, setExpanded] = useState(false);
+  const normalized = text.replace(/\n{3,}/g, '\n\n').trim();
+  const LIMIT = 250;
+  const isLong = normalized.length > LIMIT;
+
+  return (
+    <div className="mt-4 pt-4 border-t border-slate-100">
+      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.14em] mb-1.5">
+        {company ? `About ${company}` : 'About the company'}
+      </p>
+      <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+        {isLong && !expanded ? normalized.slice(0, LIMIT).trimEnd() + '…' : normalized}
+      </p>
+      {isLong && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="mt-2 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors flex items-center gap-1"
+        >
+          {expanded ? 'Show less' : 'Show more'}
+          <svg
+            className={`w-3.5 h-3.5 transition-transform ${expanded ? 'rotate-180' : ''}`}
+            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      )}
+    </div>
+  );
+}
+
 // ─── Cover Letter ─────────────────────────────────────────────────────────────
 
 function CoverLetterBox({ analysisId, initialLetter, tone: initialTone }) {
@@ -655,17 +723,15 @@ export default function AnalysisDetailPage() {
             )}
           </div>
 
-          {job.description && (
-            <p className="text-sm text-slate-600 leading-relaxed mt-4 border-t border-slate-100 pt-4">
-              {job.description}
-            </p>
-          )}
+          {job.description && <JobDescription text={job.description} />}
 
           {job.skills_required?.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-4">
               {job.skills_required.map((skill) => <Chip key={skill}>{skill}</Chip>)}
             </div>
           )}
+
+          {job.company_description && <CompanyDescription text={job.company_description} company={job.company} />}
 
           {!isMatch && (job.budget_min > 0 || job.client_hires != null) && (
             <div className="flex flex-wrap gap-5 text-sm text-slate-500 mt-4 pt-4 border-t border-slate-100">

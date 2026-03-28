@@ -103,7 +103,7 @@ export default function ManualAnalysisPage() {
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-3">
             Platform
           </p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {PLATFORMS.map((p) => {
               const isActive = platform === p.value;
               return (

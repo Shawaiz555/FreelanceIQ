@@ -74,6 +74,7 @@ async function runJobMatchPipeline(jobData, fullUser) {
       description: jobData.description,
       skills_required: jobData.skills_required || [],
       company: jobData.company || '',
+      company_description: jobData.company_description || '',
       location: jobData.location || '',
       workplace_type: jobData.workplace_type || '',
       seniority_level: jobData.seniority_level || '',
@@ -206,7 +207,7 @@ async function handler(req, res) {
     platform, url, title, description,
     budget_min, budget_max, skills_required, client_hires,
     // LinkedIn-specific
-    company, location, workplace_type, seniority_level,
+    company, company_description, location, workplace_type, seniority_level,
   } = body;
 
   // Validate required fields
@@ -232,6 +233,7 @@ async function handler(req, res) {
     client_hires: Number(client_hires) || 0,
     // LinkedIn extras (safe to include for all platforms — ignored if blank)
     company: company || '',
+    company_description: company_description || '',
     location: location || '',
     workplace_type: workplace_type || '',
     seniority_level: seniority_level || '',

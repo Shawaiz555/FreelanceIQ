@@ -895,6 +895,12 @@
             <div class="confirm-skills" id="confirm-skills"></div>
           </div>
 
+          <!-- Company description — LinkedIn only -->
+          <div class="confirm-section" id="confirm-company-desc-section" style="display: none">
+            <div class="confirm-section-label" id="confirm-company-desc-label">About the company</div>
+            <div class="confirm-desc" id="confirm-company-desc" style="max-height: 80px"></div>
+          </div>
+
           <!-- Guide: shown only when description is missing -->
           <div
             id="confirm-no-desc-guide"
@@ -1277,6 +1283,10 @@
             ></div>
             <div class="card-label" style="margin-bottom: 4px">Full description</div>
             <div class="job-desc-full" id="match-job-desc">—</div>
+            <div id="match-company-desc-wrap" style="display:none; margin-top: 10px">
+              <div class="card-label" id="match-company-desc-label" style="margin-bottom: 4px">About the company</div>
+              <div class="job-desc-full" id="match-company-desc">—</div>
+            </div>
           </div>
         </div>
 

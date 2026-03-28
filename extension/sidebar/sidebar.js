@@ -235,6 +235,17 @@ function renderMatchResult(analysis) {
       ['Skills', (job.skills_required || []).slice(0, 3).join(', ')],
     ]);
     $('match-job-desc').textContent = matchDesc || 'No description available.';
+
+    // About the company
+    var companyDesc = (job.company_description || '').trim();
+    var companyDescWrap = $('match-company-desc-wrap');
+    if (companyDesc && companyDescWrap) {
+      companyDescWrap.style.display = 'block';
+      var labelEl = $('match-company-desc-label');
+      if (labelEl && job.company) labelEl.textContent = 'About ' + job.company;
+      $('match-company-desc').textContent = companyDesc;
+    }
+
     setupToggle('match-about-toggle', 'match-about-body');
   }
 
@@ -409,6 +420,20 @@ window.addEventListener('message', (event) => {
         skillsSection.style.display = '';
       } else {
         skillsSection.style.display = 'none';
+      }
+
+      // Company description — LinkedIn only
+      const companyDescSection = $('confirm-company-desc-section');
+      const companyDesc = (payload.company_description || '').trim();
+      if (companyDescSection) {
+        if (companyDesc) {
+          const labelEl = $('confirm-company-desc-label');
+          if (labelEl && payload.company) labelEl.textContent = 'About ' + payload.company;
+          $('confirm-company-desc').textContent = companyDesc;
+          companyDescSection.style.display = '';
+        } else {
+          companyDescSection.style.display = 'none';
+        }
       }
 
       showState('confirm');

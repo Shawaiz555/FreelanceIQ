@@ -80,6 +80,21 @@ export default function LoginPage() {
           <p className="text-blue-200/60 text-sm font-medium mt-1">
             AI-powered bidding intelligence
           </p>
+          <Link
+            to="/"
+            className="mt-4 flex items-center gap-0.5 text-[11px] font-bold px-5 py-1 rounded-full bg-white text-blue hover:scale-95 transition-colors"
+          >
+            <svg
+              className="w-3.5 h-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to home
+          </Link>
         </div>
 
         {/* Auth Card */}

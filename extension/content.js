@@ -381,6 +381,44 @@ function extractLinkedInJob() {
   var url = window.location.href;
   var pathname = window.location.pathname;
 
+  // ── Scroll job details panel to trigger lazy-loaded sections ─────────────
+  // LinkedIn lazy-loads "About the company" — it only appears in the DOM after
+  // the user scrolls the right-hand job detail pane. Scroll it programmatically.
+  var scrollTargets = [
+    '.jobs-search__job-details--wrapper',
+    '.jobs-details__main-content',
+    '.scaffold-layout__detail',
+    '.scaffold-layout__detail-container',
+    '.jobs-details',
+    'main',
+  ];
+  for (var sti = 0; sti < scrollTargets.length; sti++) {
+    var scrollEl = document.querySelector(scrollTargets[sti]);
+    if (scrollEl && scrollEl.scrollHeight > scrollEl.clientHeight) {
+      try { scrollEl.scrollTop = scrollEl.scrollHeight; } catch (e) { /* ignore */ }
+      break;
+    }
+  }
+
+  // ── Click "Show more" buttons to expand truncated content ─────────────────
+  // LinkedIn truncates both the job description and "About the company" sections
+  // behind "Show more" buttons. Click them all synchronously before extracting.
+  var showMoreBtns = document.querySelectorAll(
+    '.show-more-less-html__button, ' +
+    '.jobs-description__footer-button, ' +
+    'button[aria-label*="more"], ' +
+    'button.show-more-less-button, ' +
+    '[data-tracking-control-name*="see_more"]'
+  );
+  for (var smi = 0; smi < showMoreBtns.length; smi++) {
+    var btn = showMoreBtns[smi];
+    var btnText = (btn.innerText || btn.textContent || '').trim().toLowerCase();
+    // Only click "show more" variants, not "show less"
+    if (btnText.indexOf('show more') !== -1 || btnText === 'see more' || btnText === 'more') {
+      try { btn.click(); } catch (e) { /* ignore */ }
+    }
+  }
+
   // Scope all queries to the job detail container to avoid grabbing
   // nav/notification elements (e.g. "0 notifications" h1).
   // On /jobs/view/ pages there is no split panel so no container class matches —
@@ -579,6 +617,76 @@ function extractLinkedInJob() {
   // Strip leading "About the job" heading that LinkedIn includes in some containers
   description = description.replace(/^about\s+the\s+job[\s\n]*/i, '').trim();
 
+  // ── About the company ─────────────────────────────────────────────────────
+  // Strategy 1: known LinkedIn class selectors (most reliable when present)
+  var company_description = '';
+  var companyDescSelectors = [
+    '.jobs-company__company-description',
+    '.jobs-company__inline-information',
+    '.jobs-company-description',
+    '[data-test-about-company-content]',
+    '.job-details-jobs-unified-top-card__company-description',
+    '.topcard__flavor--company-description',
+  ];
+  for (var ci = 0; ci < companyDescSelectors.length; ci++) {
+    var cand = document.querySelector(companyDescSelectors[ci]);
+    if (cand) {
+      var ctext = (cand.innerText || cand.textContent || '').trim();
+      if (ctext.length > 30) { company_description = ctext; break; }
+    }
+  }
+
+  // Strategy 2: scan every heading in the document for "About the company" text,
+  // then grab the parent card's text. LinkedIn uses many class name variations.
+  if (!company_description) {
+    var allHeadings = document.querySelectorAll('h2, h3, h4, h5');
+    for (var hi = 0; hi < allHeadings.length; hi++) {
+      var hText = (allHeadings[hi].innerText || allHeadings[hi].textContent || '').trim();
+      if (/^about\s+(the\s+)?company$/i.test(hText)) {
+        // Walk up to find the containing card (artdeco-card or similar wrapper)
+        var container = allHeadings[hi].parentElement;
+        for (var depth = 0; depth < 5; depth++) {
+          if (!container) break;
+          var containerText = (container.innerText || container.textContent || '').trim();
+          // The card containing this heading should have meaningful text beyond the heading itself
+          if (containerText.length > hText.length + 40) {
+            // Strip the heading itself from the text
+            company_description = containerText
+              .replace(/^about\s+(the\s+)?company[\s\n:.]*/i, '').trim();
+            break;
+          }
+          container = container.parentElement;
+        }
+        if (company_description) break;
+      }
+    }
+  }
+
+  // Strategy 3: scan #job-details for an "About the company" section within it
+  // (LinkedIn 2025 sometimes embeds company info inside the job details container)
+  if (!company_description) {
+    var jobDetailsEl = document.querySelector('#job-details');
+    if (jobDetailsEl) {
+      var fullText = (jobDetailsEl.innerText || jobDetailsEl.textContent || '').trim();
+      var companyMatch = fullText.match(/about\s+(the\s+)?company[\s\n:.]*([\s\S]{40,})/i);
+      if (companyMatch) {
+        company_description = companyMatch[2].trim();
+      }
+    }
+  }
+
+  // Strategy 4: full-page innerText scan for "About the company" block.
+  // Last resort — searches the entire visible page text. Works regardless of
+  // LinkedIn's DOM structure or class names.
+  if (!company_description) {
+    var bodyText = (document.body.innerText || document.body.textContent || '').trim();
+    var bodyMatch = bodyText.match(/about\s+(the\s+)?company[\s\n:]+([A-Za-z\u00C0-\u024F][^]{40,}?)(?=\n{3,}|\s{3,}about\s|\s{3,}similar\s+jobs|\s{3,}show\s+more\s+jobs|$)/i);
+    if (bodyMatch) {
+      // Limit to first 800 chars to avoid pulling in unrelated page content
+      company_description = bodyMatch[2].slice(0, 800).trim();
+    }
+  }
+
   // ── Skills ─────────────────────────────────────────────────────────────────
   var skillEls = root.querySelectorAll(
     '.job-details-skill-match-status-list__skill-name, ' +
@@ -620,6 +728,7 @@ function extractLinkedInJob() {
     seniority_level: seniority_level,
     employment_type: employment_type,
     description: description || 'No description found.',
+    company_description: company_description,
     budget_min: 0,
     budget_max: 0,
     skills_required: skills,
@@ -814,8 +923,10 @@ window.fiqLinkedInDebug = function () {
 };
 
 function extractWithRetry(maxAttempts, delayMs) {
-  maxAttempts = maxAttempts || 8;
+  maxAttempts = maxAttempts || 10;
   delayMs = delayMs || 1200;
+
+  var isLinkedIn = window.location.href.includes('linkedin.com');
 
   return new Promise(function (resolve) {
     var attempts = 0;
@@ -824,8 +935,12 @@ function extractWithRetry(maxAttempts, delayMs) {
       attempts++;
       var job = detectAndExtract();
 
-      if (job && job.title !== 'Upwork Job' && job.title !== 'LinkedIn Job' &&
-          job.description && job.description.length > 50) {
+      var hasTitle = job && job.title !== 'Upwork Job' && job.title !== 'LinkedIn Job';
+      var hasDesc = job && job.description && job.description.length > 50;
+      // For LinkedIn, also wait for company_description if possible (up to maxAttempts)
+      var hasCompanyDesc = !isLinkedIn || (job && job.company_description);
+
+      if (hasTitle && hasDesc && (hasCompanyDesc || attempts >= maxAttempts)) {
         resolve(job);
         return;
       }
@@ -839,7 +954,9 @@ function extractWithRetry(maxAttempts, delayMs) {
     }
 
     var immediateJob = detectAndExtract();
-    if (immediateJob && immediateJob.description && immediateJob.description.length > 50) {
+    var immediateHasDesc = immediateJob && immediateJob.description && immediateJob.description.length > 50;
+    var immediateHasCompany = !isLinkedIn || (immediateJob && immediateJob.company_description);
+    if (immediateHasDesc && immediateHasCompany) {
       resolve(immediateJob);
       return;
     }
@@ -1094,10 +1211,11 @@ function _showLinkedInConfirm() {
     var hasDesc = jobPreview && jobPreview.description &&
                   jobPreview.description !== 'No description found.' &&
                   jobPreview.description.length > 50;
+    var hasCompanyDesc = jobPreview && !!jobPreview.company_description;
 
     // Send on the first attempt (shows sidebar quickly), whenever we get a
-    // better title than before, and when description is finally available.
-    var shouldSend = attempts === 0 || hasDesc || attempts >= maxAttempts ||
+    // better title than before, and when description/company info is finally available.
+    var shouldSend = attempts === 0 || hasDesc || hasCompanyDesc || attempts >= maxAttempts ||
                      (hasRealTitle && title !== lastSentTitle);
 
     if (shouldSend) {
@@ -1116,7 +1234,8 @@ function _showLinkedInConfirm() {
       sendToSidebar({ type: 'CONFIRM_JOB', payload: confirmPayload });
     }
 
-    if (!hasDesc && attempts < maxAttempts) {
+    // Keep retrying until we have both description and company description (or hit the limit)
+    if ((!hasDesc || !hasCompanyDesc) && attempts < maxAttempts) {
       attempts++;
       _linkedInConfirmTimer = setTimeout(tryExtract, 1000);
     }

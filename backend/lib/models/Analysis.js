@@ -30,6 +30,7 @@ const analysisSchema = new mongoose.Schema(
       client_hires: { type: Number, default: 0 },
       // LinkedIn-specific
       company: { type: String, default: '' },
+      company_description: { type: String, default: '' },
       location: { type: String, default: '' },
       workplace_type: { type: String, default: '' },
       seniority_level: { type: String, default: '' },
