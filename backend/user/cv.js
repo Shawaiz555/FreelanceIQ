@@ -117,29 +117,35 @@ async function handler(req, res) {
   });
 
   // Extract structured profile fields from CV text via OpenAI
+  // Pass ?profile=false to skip writing extracted fields back to the user document
+  // (used by onboarding so the user can review/edit before committing).
+  const saveProfile = req.query.profile !== 'false';
+
   let extracted = {};
   try {
     const { extractProfileFromCV } = require('../lib/services/openai.service');
     const { data } = await extractProfileFromCV(cv_text);
     extracted = data;
 
-    // Build a $set map — only overwrite fields that are non-empty in the extraction
-    const profileUpdates = {};
-    if (extracted.name)                    profileUpdates['name']                         = extracted.name;
-    if (extracted.title)                   profileUpdates['profile.title']                = extracted.title;
-    if (extracted.bio)                     profileUpdates['profile.bio']                  = extracted.bio;
-    if (extracted.skills?.length)          profileUpdates['profile.skills']               = extracted.skills;
-    if (extracted.experience_years)        profileUpdates['profile.experience_years']     = extracted.experience_years;
-    if (extracted.location)                profileUpdates['profile.location']             = extracted.location;
-    if (extracted.linkedin_url)            profileUpdates['profile.linkedin_url']         = extracted.linkedin_url;
-    if (extracted.github_url)              profileUpdates['profile.github_url']           = extracted.github_url;
-    if (extracted.website_url)             profileUpdates['profile.website_url']          = extracted.website_url;
-    if (extracted.languages?.length)       profileUpdates['profile.languages']            = extracted.languages;
-    if (extracted.education?.length)       profileUpdates['profile.education']            = extracted.education;
-    if (extracted.certifications?.length)  profileUpdates['profile.certifications']       = extracted.certifications;
+    if (saveProfile) {
+      // Build a $set map — only overwrite fields that are non-empty in the extraction
+      const profileUpdates = {};
+      if (extracted.name)                    profileUpdates['name']                         = extracted.name;
+      if (extracted.title)                   profileUpdates['profile.title']                = extracted.title;
+      if (extracted.bio)                     profileUpdates['profile.bio']                  = extracted.bio;
+      if (extracted.skills?.length)          profileUpdates['profile.skills']               = extracted.skills;
+      if (extracted.experience_years)        profileUpdates['profile.experience_years']     = extracted.experience_years;
+      if (extracted.location)                profileUpdates['profile.location']             = extracted.location;
+      if (extracted.linkedin_url)            profileUpdates['profile.linkedin_url']         = extracted.linkedin_url;
+      if (extracted.github_url)              profileUpdates['profile.github_url']           = extracted.github_url;
+      if (extracted.website_url)             profileUpdates['profile.website_url']          = extracted.website_url;
+      if (extracted.languages?.length)       profileUpdates['profile.languages']            = extracted.languages;
+      if (extracted.education?.length)       profileUpdates['profile.education']            = extracted.education;
+      if (extracted.certifications?.length)  profileUpdates['profile.certifications']       = extracted.certifications;
 
-    if (Object.keys(profileUpdates).length > 0) {
-      await User.findByIdAndUpdate(req.user._id, { $set: profileUpdates });
+      if (Object.keys(profileUpdates).length > 0) {
+        await User.findByIdAndUpdate(req.user._id, { $set: profileUpdates });
+      }
     }
   } catch (extractErr) {
     // Non-fatal: log but don't fail the upload

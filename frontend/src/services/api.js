@@ -137,10 +137,11 @@ export const userApi = {
     return data;
   },
 
-  async uploadCV(file) {
+  async uploadCV(file, { saveProfile = true } = {}) {
     const form = new FormData();
     form.append('cv', file);
-    const { data } = await client.post('/user/cv', form, {
+    const url = saveProfile ? '/user/cv' : '/user/cv?profile=false';
+    const { data } = await client.post(url, form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return data;

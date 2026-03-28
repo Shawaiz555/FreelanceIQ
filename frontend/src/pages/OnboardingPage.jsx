@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateUser } from '../store/slices/authSlice';
@@ -49,6 +49,134 @@ function TagInput({ tags, setTags, placeholder, colorClass = 'bg-blue-100 text-b
   );
 }
 
+// ── CV Preview (PDF only) ─────────────────────────────────────────────────────
+
+function CVPreview({ cvFilename, previewObjectUrl }) {
+  const [modalOpen, setModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (!modalOpen) return;
+    const handler = (e) => { if (e.key === 'Escape') setModalOpen(false); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [modalOpen]);
+
+  if (!previewObjectUrl) return null;
+
+  return (
+    <>
+      {/* ── 2-column preview card ── */}
+      <div className="mt-4 rounded-2xl border border-white/20 overflow-hidden bg-white/10 backdrop-blur-sm shadow-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2">
+          {/* Left col — file info + actions */}
+          <div className="p-5 flex flex-col justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div
+                className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
+                style={{ background: 'linear-gradient(135deg,#ef4444,#dc2626)' }}
+              >
+                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-white truncate leading-tight">
+                  {cvFilename || 'CV Document'}
+                </p>
+                <span className="inline-block text-[10px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider text-white mt-1" style={{ background: '#dc2626' }}>
+                  PDF
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setModalOpen(true)}
+                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl text-white transition-all hover:-translate-y-0.5"
+                style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', boxShadow: '0 4px 12px -4px rgba(99,102,241,0.5)' }}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 3h6m0 0v6m0-6L10 14m-7 7h6m-6 0v-6m0 6l11-11" />
+                </svg>
+                View full CV
+              </button>
+              <a
+                href={previewObjectUrl}
+                download={cvFilename || 'cv.pdf'}
+                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl border border-white/20 text-slate-200 hover:bg-white/10 transition-all"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download
+              </a>
+            </div>
+          </div>
+
+          {/* Right col — PDF thumbnail (non-interactive) */}
+          <div
+            className="relative bg-slate-800/50 border-t sm:border-t-0 sm:border-l border-white/10 overflow-hidden cursor-pointer group"
+            style={{ height: '200px' }}
+            onClick={() => setModalOpen(true)}
+            title="Click to view full CV"
+          >
+            <iframe
+              src={`${previewObjectUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+              className="w-full h-full pointer-events-none select-none"
+              title="CV thumbnail"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-end justify-center pb-3">
+              <span className="flex items-center gap-1.5 text-white text-xs font-bold bg-black/40 px-3 py-1.5 rounded-xl backdrop-blur-sm">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 3h6m0 0v6m0-6L10 14m-7 7h6m-6 0v-6m0 6l11-11" />
+                </svg>
+                View full CV
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Full-screen modal ── */}
+      {modalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.85)' }}
+          onClick={() => setModalOpen(false)}
+        >
+          <div
+            className="relative w-full max-w-4xl h-[90vh] bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider text-white" style={{ background: '#dc2626' }}>
+                  PDF
+                </span>
+                <span className="text-sm font-bold text-slate-700 truncate max-w-xs">
+                  {cvFilename || 'CV Document'}
+                </span>
+              </div>
+              <button
+                onClick={() => setModalOpen(false)}
+                className="p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-all"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden bg-slate-100">
+              <embed src={previewObjectUrl} type="application/pdf" className="w-full h-full" style={{ minHeight: '600px' }} />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function OnboardingPage() {
@@ -62,6 +190,13 @@ export default function OnboardingPage() {
   const [uploadError, setUploadError] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const cvInputRef = useRef(null);
+
+  // Tracks whether we uploaded a CV that is pending save
+  const [cvUploaded, setCvUploaded] = useState(false);
+  // Object URL for fresh preview (created from the File object before upload)
+  const [cvPreviewUrl, setCvPreviewUrl] = useState(null);
+  // CV metadata from backend response (for display)
+  const [cvMeta, setCvMeta] = useState(null); // { filename }
 
   const [form, setForm] = useState({
     name: '',
@@ -78,34 +213,86 @@ export default function OnboardingPage() {
   const [education, setEducation] = useState([]);
   const [certifications, setCertifications] = useState([]);
 
-  const ensureHttps = (field) => (e) => {
-    const trimmed = e.target.value.trim();
-    if (trimmed && !/^https?:\/\//i.test(trimmed)) {
-      setForm((p) => ({ ...p, [field]: 'https://' + trimmed }));
+  // Revoke preview blob URL on unmount
+  useEffect(() => {
+    return () => {
+      if (cvPreviewUrl) URL.revokeObjectURL(cvPreviewUrl);
+    };
+  }, [cvPreviewUrl]);
+
+  // Discard CV from backend if user leaves without saving
+  const discardCv = async () => {
+    if (!cvUploaded) return;
+    setCvUploaded(false);
+    try {
+      await userApi.removeCV();
+    } catch {
+      // best-effort
     }
+  };
+
+  const addHttps = (url) => {
+    if (!url) return '';
+    const t = url.trim();
+    return t && !/^https?:\/\//i.test(t) ? 'https://' + t : t;
+  };
+
+  const ensureHttps = (field) => (e) => {
+    const val = addHttps(e.target.value);
+    if (val !== e.target.value.trim()) setForm((p) => ({ ...p, [field]: val }));
   };
 
   const handleFileUpload = async (file) => {
     if (!file) return;
+
+    // PDF-only validation
+    if (file.type !== 'application/pdf') {
+      setUploadError('Only PDF files are supported. Please upload a PDF.');
+      if (cvInputRef.current) cvInputRef.current.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError('File is too large. Maximum size is 5 MB.');
+      if (cvInputRef.current) cvInputRef.current.value = '';
+      return;
+    }
+
+    // Create a local preview URL immediately before uploading
+    const localUrl = URL.createObjectURL(file);
+    // Revoke old preview URL if any
+    if (cvPreviewUrl) URL.revokeObjectURL(cvPreviewUrl);
+    setCvPreviewUrl(localUrl);
+
     setUploading(true);
     setUploadError(null);
     try {
-      const res = await userApi.uploadCV(file);
+      const res = await userApi.uploadCV(file, { saveProfile: false });
       const ext = res.data?.extracted || {};
+
       setForm({
         name:             ext.name             || user?.name || '',
         title:            ext.title            || '',
         bio:              ext.bio              || '',
         experience_years: ext.experience_years != null && ext.experience_years > 0 ? String(ext.experience_years) : '',
         location:         ext.location         || '',
-        linkedin_url:     ext.linkedin_url     || '',
-        github_url:       ext.github_url       || '',
-        website_url:      ext.website_url      || '',
+        linkedin_url:     addHttps(ext.linkedin_url),
+        github_url:       addHttps(ext.github_url),
+        website_url:      addHttps(ext.website_url),
       });
-      if (ext.skills?.length)        setSkills(ext.skills);
-      if (ext.languages?.length)     setLanguages(ext.languages);
-      if (ext.education?.length)     setEducation(ext.education);
+      if (ext.skills?.length)         setSkills(ext.skills);
+      if (ext.languages?.length)      setLanguages(ext.languages);
+      if (ext.education?.length)      setEducation(ext.education);
       if (ext.certifications?.length) setCertifications(ext.certifications);
+
+      // Store CV metadata for preview display
+      setCvMeta({
+        filename: res.data?.filename || file.name,
+        cv_text:  res.data?.chars_extracted ? null : null, // text not returned by API, but we have stats
+      });
+
+      setCvUploaded(true);
+
+      // Only update Redux with minimal info (not the full profile save yet)
       dispatch(updateUser({
         ...user,
         profile: {
@@ -114,13 +301,35 @@ export default function OnboardingPage() {
           cv_uploaded_at: new Date().toISOString(),
         },
       }));
+
       setStep('review');
     } catch (err) {
+      // Revoke the preview URL since upload failed
+      URL.revokeObjectURL(localUrl);
+      setCvPreviewUrl(null);
       setUploadError(err?.message || 'Upload failed. Please try a different file.');
     } finally {
       setUploading(false);
       if (cvInputRef.current) cvInputRef.current.value = '';
     }
+  };
+
+  const handleBackToUpload = async () => {
+    // Discard the uploaded CV — user hasn't saved yet
+    await discardCv();
+    // Revoke preview URL
+    if (cvPreviewUrl) {
+      URL.revokeObjectURL(cvPreviewUrl);
+      setCvPreviewUrl(null);
+    }
+    setCvMeta(null);
+    setStep('upload');
+  };
+
+  const handleSkip = async () => {
+    // Discard any uploaded CV before navigating away
+    await discardCv();
+    navigate('/dashboard', { replace: true });
   };
 
   const handleFinish = async () => {
@@ -144,6 +353,8 @@ export default function OnboardingPage() {
       };
       const res = await userApi.updateProfile(updates);
       dispatch(updateUser(res.data));
+      // CV is already saved on backend — mark it as committed
+      setCvUploaded(false);
       navigate('/dashboard', { replace: true });
     } catch {
       navigate('/dashboard', { replace: true });
@@ -185,14 +396,14 @@ export default function OnboardingPage() {
           <div className="bg-white/95 backdrop-blur-xl rounded-2xl sm:rounded-[2.5rem] shadow-2xl shadow-black/40 p-6 sm:p-8 border border-white/20">
             <h2 className="text-xl sm:text-2xl font-black text-slate-900 mb-1">Upload your CV</h2>
             <p className="text-slate-500 text-xs sm:text-sm mb-6">
-              We'll extract your skills, experience, and contact info automatically. PDF or DOCX, up to 5 MB.
+              We'll extract your skills, experience, and contact info automatically. PDF only, up to 5 MB.
             </p>
 
             {/* Drop zone */}
             <div
               onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
               onDragLeave={() => setIsDragOver(false)}
-              onDrop={(e) => { e.preventDefault(); setIsDragOver(false); handleFileUpload(e.dataTransfer.files[0]); }}
+              onDrop={(e) => { e.preventDefault(); setIsDragOver(false); handleFileUpload(e.dataTransfer.files[0]);  }}
               onClick={() => !uploading && cvInputRef.current?.click()}
               className={`relative border-2 border-dashed rounded-2xl p-8 sm:p-10 text-center cursor-pointer transition-all ${
                 isDragOver
@@ -203,7 +414,7 @@ export default function OnboardingPage() {
               <input
                 ref={cvInputRef}
                 type="file"
-                accept=".pdf,.doc,.docx"
+                accept=".pdf,application/pdf"
                 className="hidden"
                 onChange={(e) => handleFileUpload(e.target.files?.[0])}
               />
@@ -226,7 +437,7 @@ export default function OnboardingPage() {
                   </div>
                   <div>
                     <p className="text-sm font-bold text-slate-700">Drop your CV here or click to browse</p>
-                    <p className="text-xs text-slate-400 mt-1">PDF or DOCX · max 5 MB</p>
+                    <p className="text-xs text-slate-400 mt-1">PDF only · max 5 MB</p>
                   </div>
                 </div>
               )}
@@ -241,7 +452,7 @@ export default function OnboardingPage() {
             <div className="mt-5 text-center">
               <button
                 type="button"
-                onClick={() => navigate('/dashboard', { replace: true })}
+                onClick={handleSkip}
                 className="text-xs text-slate-400 hover:text-slate-600 transition-colors underline underline-offset-2"
               >
                 Skip — I'll set up my profile later
@@ -262,6 +473,14 @@ export default function OnboardingPage() {
                 CV parsed successfully. Review the extracted fields below and edit anything that looks off.
               </p>
             </div>
+
+            {/* CV Preview */}
+            {cvMeta && (
+              <CVPreview
+                cvFilename={cvMeta.filename}
+                previewObjectUrl={cvPreviewUrl}
+              />
+            )}
 
             {/* Card */}
             <div className="bg-white/95 backdrop-blur-xl rounded-2xl sm:rounded-[2.5rem] shadow-2xl shadow-black/40 p-6 sm:p-8 border border-white/20 space-y-7">
@@ -430,7 +649,7 @@ export default function OnboardingPage() {
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setStep('upload')}
+                  onClick={handleBackToUpload}
                   className="w-full sm:w-auto px-5 py-3.5 text-sm font-bold text-slate-600 border-2 border-slate-200 rounded-2xl hover:border-slate-300 hover:bg-slate-50 transition-all"
                 >
                   ← Back
@@ -456,6 +675,17 @@ export default function OnboardingPage() {
                   )}
                 </button>
               </div>
+            </div>
+
+            {/* Skip link on review step too */}
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={handleSkip}
+                className="text-xs text-slate-400 hover:text-slate-300 transition-colors underline underline-offset-2"
+              >
+                Skip — I'll set up my profile later
+              </button>
             </div>
           </div>
         )}

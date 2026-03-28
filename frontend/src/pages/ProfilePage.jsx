@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { z } from 'zod';
 import { updateUser } from '../store/slices/authSlice';
@@ -6,20 +6,26 @@ import { addNotification } from '../store/slices/uiSlice';
 import { userApi } from '../services/api';
 
 const profileSchema = z.object({
-  name:             z.string().min(2, 'Name must be at least 2 characters').max(80),
-  title:            z.string().max(100, 'Title must be under 100 characters').optional().or(z.literal('')),
-  bio:              z.string().max(2000, 'Bio must be under 2000 characters').optional().or(z.literal('')),
+  name: z.string().min(2, 'Name must be at least 2 characters').max(80),
+  title: z.string().max(100, 'Title must be under 100 characters').optional().or(z.literal('')),
+  bio: z.string().max(2000, 'Bio must be under 2000 characters').optional().or(z.literal('')),
   experience_years: z.number().min(0).max(50).optional().nullable(),
-  upwork_url:       z.string().url('Enter a valid URL').optional().or(z.literal('')),
-  location:         z.string().max(100).optional().or(z.literal('')),
-  linkedin_url:     z.string().url('Enter a valid URL').optional().or(z.literal('')),
-  github_url:       z.string().url('Enter a valid URL').optional().or(z.literal('')),
-  website_url:      z.string().url('Enter a valid URL').optional().or(z.literal('')),
+  upwork_url: z.string().url('Enter a valid URL').optional().or(z.literal('')),
+  location: z.string().max(100).optional().or(z.literal('')),
+  linkedin_url: z.string().url('Enter a valid URL').optional().or(z.literal('')),
+  github_url: z.string().url('Enter a valid URL').optional().or(z.literal('')),
+  website_url: z.string().url('Enter a valid URL').optional().or(z.literal('')),
 });
 
 // ─── Tag input ────────────────────────────────────────────────────────────────
 
-function TagInput({ tags, onChange, placeholder, colorClass = 'bg-blue-500/10 text-blue-700', maxItems = 20 }) {
+function TagInput({
+  tags,
+  onChange,
+  placeholder,
+  colorClass = 'bg-blue-500/10 text-blue-700',
+  maxItems = 20,
+}) {
   const [input, setInput] = useState('');
 
   const add = (raw) => {
@@ -43,9 +49,19 @@ function TagInput({ tags, onChange, placeholder, colorClass = 'bg-blue-500/10 te
     <div>
       <div className="min-h-[46px] flex flex-wrap gap-1.5 items-center px-3 py-2 border border-slate-200 rounded-xl focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent bg-slate-50 focus-within:bg-white transition-all">
         {tags.map((tag) => (
-          <span key={tag} className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg ${colorClass}`}>
+          <span
+            key={tag}
+            className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg ${colorClass}`}
+          >
             {tag}
-            <button type="button" onClick={() => onChange(tags.filter((t) => t !== tag))} className="hover:opacity-60 leading-none ml-0.5" aria-label={`Remove ${tag}`}>×</button>
+            <button
+              type="button"
+              onClick={() => onChange(tags.filter((t) => t !== tag))}
+              className="hover:opacity-60 leading-none ml-0.5"
+              aria-label={`Remove ${tag}`}
+            >
+              ×
+            </button>
           </span>
         ))}
         <input
@@ -68,7 +84,9 @@ function TagInput({ tags, onChange, placeholder, colorClass = 'bg-blue-500/10 te
 function Field({ label, error, children }) {
   return (
     <div>
-      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">{label}</label>
+      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">
+        {label}
+      </label>
       {children}
       {error && <p className="text-xs text-red-500 mt-1.5">{error}</p>}
     </div>
@@ -80,13 +98,191 @@ const inputCls = (err) =>
     err ? 'border-red-400 bg-red-50' : 'border-slate-200'
   }`;
 
+// ─── CV Preview (PDF only) ────────────────────────────────────────────────────
+
+function CVPreview({ cvFile, cvFilename, previewObjectUrl, cvText }) {
+  const [modalOpen, setModalOpen] = useState(false);
+
+  // Use fresh object URL if available, otherwise reconstruct from stored Base64
+  const blobUrl = useMemo(() => {
+    if (previewObjectUrl) return previewObjectUrl;
+    if (!cvFile) return null;
+    try {
+      const binary = atob(cvFile);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+      return URL.createObjectURL(blob);
+    } catch {
+      return null;
+    }
+  }, [cvFile, previewObjectUrl]);
+
+  useEffect(() => {
+    if (!modalOpen) return;
+    const handler = (e) => { if (e.key === 'Escape') setModalOpen(false); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [modalOpen]);
+
+  if (!blobUrl) return null;
+
+  return (
+    <>
+      {/* ── 2-column card ── */}
+      <div className="mt-4 rounded-2xl border border-slate-200 overflow-hidden bg-white shadow-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2">
+
+          {/* Left col — file info + actions */}
+          <div className="p-5 flex flex-col justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div
+                className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
+                style={{ background: 'linear-gradient(135deg,#ef4444,#dc2626)' }}
+              >
+                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-slate-900 truncate leading-tight">
+                  {cvFilename || 'CV Document'}
+                </p>
+                <span className="inline-block text-[10px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider text-white mt-1" style={{ background: '#dc2626' }}>
+                  PDF
+                </span>
+              </div>
+            </div>
+
+            {/* Stats */}
+            {cvText && (
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Words</p>
+                  <p className="text-sm font-black text-slate-800 mt-0.5">
+                    {cvText.trim().split(/\s+/).filter(Boolean).length.toLocaleString()}
+                  </p>
+                </div>
+                <div className="bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Chars</p>
+                  <p className="text-sm font-black text-slate-800 mt-0.5">
+                    {cvText.length.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setModalOpen(true)}
+                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl text-white transition-all hover:-translate-y-0.5"
+                style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', boxShadow: '0 4px 12px -4px rgba(99,102,241,0.5)' }}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 3h6m0 0v6m0-6L10 14m-7 7h6m-6 0v-6m0 6l11-11" />
+                </svg>
+                View full CV
+              </button>
+              <a
+                href={blobUrl}
+                download={cvFilename || 'cv.pdf'}
+                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl border border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50 transition-all"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download
+              </a>
+            </div>
+          </div>
+
+          {/* Right col — PDF thumbnail (non-interactive) */}
+          <div
+            className="relative bg-slate-50 border-t sm:border-t-0 sm:border-l border-slate-200 overflow-hidden cursor-pointer group"
+            style={{ height: '220px' }}
+            onClick={() => setModalOpen(true)}
+            title="Click to view full CV"
+          >
+            <iframe
+              src={`${blobUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+              className="w-full h-full pointer-events-none select-none"
+              title="CV thumbnail"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-end justify-center pb-4">
+              <span className="flex items-center gap-1.5 text-white text-xs font-bold bg-black/40 px-3 py-1.5 rounded-xl backdrop-blur-sm">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 3h6m0 0v6m0-6L10 14m-7 7h6m-6 0v-6m0 6l11-11" />
+                </svg>
+                View full CV
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Fullscreen modal ── */}
+      {modalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8"
+          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)' }}
+          onClick={(e) => { if (e.target === e.currentTarget) setModalOpen(false); }}
+        >
+          <div className="relative w-full max-w-4xl h-full max-h-[90vh] bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#ef4444,#dc2626)' }}>
+                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-slate-900 leading-tight">{cvFilename || 'CV Document'}</p>
+                  <p className="text-xs text-slate-400">Press Esc to close</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={blobUrl}
+                  download={cvFilename || 'cv.pdf'}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Download
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                  className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-hidden bg-slate-100">
+              <embed src={blobUrl} type="application/pdf" className="w-full h-full" />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 // ─── Section card ─────────────────────────────────────────────────────────────
 
 function ProfileSection({ icon, title, gradient, children }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
       <div className="flex items-center gap-3 mb-5">
-        <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-sm shrink-0`}>
+        <div
+          className={`w-9 h-9 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-sm shrink-0`}
+        >
           {icon}
         </div>
         <h3 className="text-sm font-bold text-slate-900">{title}</h3>
@@ -99,13 +295,13 @@ function ProfileSection({ icon, title, gradient, children }) {
 // ─── Tier styles ──────────────────────────────────────────────────────────────
 
 const TIER_GRADIENT = {
-  free:   'from-slate-500 to-slate-600',
-  pro:    'from-blue-500 to-indigo-600',
+  free: 'from-slate-500 to-slate-600',
+  pro: 'from-blue-500 to-indigo-600',
   agency: 'from-violet-500 to-purple-600',
 };
 const TIER_BADGE = {
-  free:   'bg-slate-100 text-slate-600',
-  pro:    'bg-blue-500/10 text-blue-600',
+  free: 'bg-slate-100 text-slate-600',
+  pro: 'bg-blue-500/10 text-blue-600',
   agency: 'bg-violet-500/10 text-violet-600',
 };
 
@@ -116,42 +312,44 @@ export default function ProfilePage() {
   const user = useSelector((state) => state.auth.user);
 
   const [form, setForm] = useState({
-    name:             '',
-    title:            '',
-    bio:              '',
+    name: '',
+    title: '',
+    bio: '',
     experience_years: '',
-    upwork_url:       '',
-    location:         '',
-    linkedin_url:     '',
-    github_url:       '',
-    website_url:      '',
+    upwork_url: '',
+    location: '',
+    linkedin_url: '',
+    github_url: '',
+    website_url: '',
   });
-  const [skills, setSkills]               = useState([]);
-  const [languages, setLanguages]         = useState([]);
-  const [education, setEducation]         = useState([]);
+  const [skills, setSkills] = useState([]);
+  const [languages, setLanguages] = useState([]);
+  const [education, setEducation] = useState([]);
   const [certifications, setCertifications] = useState([]);
 
   const [fieldErrors, setFieldErrors] = useState({});
-  const [loading, setLoading]         = useState(false);
-  const [error, setError]             = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [cvUploading, setCvUploading] = useState(false);
-  const [cvRemoving, setCvRemoving]   = useState(false);
+  const [cvRemoving, setCvRemoving] = useState(false);
   const [cvExtractBanner, setCvExtractBanner] = useState(false);
+  const [cvPreviewUrl, setCvPreviewUrl] = useState(null); // blob URL of freshly-uploaded file
+  const [cvPreviewMime, setCvPreviewMime] = useState(null);
   const cvExtractTimerRef = useRef(null);
   const cvInputRef = useRef(null);
 
   useEffect(() => {
     if (user) {
       setForm({
-        name:             user.name || '',
-        title:            user.profile?.title || '',
-        bio:              user.profile?.bio || '',
+        name: user.name || '',
+        title: user.profile?.title || '',
+        bio: user.profile?.bio || '',
         experience_years: user.profile?.experience_years ?? '',
-        upwork_url:       user.profile?.upwork_url || '',
-        location:         user.profile?.location || '',
-        linkedin_url:     user.profile?.linkedin_url || '',
-        github_url:       user.profile?.github_url || '',
-        website_url:      user.profile?.website_url || '',
+        upwork_url: user.profile?.upwork_url || '',
+        location: user.profile?.location || '',
+        linkedin_url: user.profile?.linkedin_url || '',
+        github_url: user.profile?.github_url || '',
+        website_url: user.profile?.website_url || '',
       });
       setSkills(user.profile?.skills || []);
       setLanguages(user.profile?.languages || []);
@@ -160,8 +358,14 @@ export default function ProfilePage() {
     }
   }, [user]);
 
-  // Cleanup banner timer on unmount
-  useEffect(() => () => clearTimeout(cvExtractTimerRef.current), []);
+  // Cleanup on unmount
+  useEffect(
+    () => () => {
+      clearTimeout(cvExtractTimerRef.current);
+      if (cvPreviewUrl) URL.revokeObjectURL(cvPreviewUrl);
+    },
+    [],
+  ); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -169,14 +373,18 @@ export default function ProfilePage() {
     if (fieldErrors[name]) setFieldErrors((prev) => ({ ...prev, [name]: null }));
   };
 
+  const addHttps = (url) => {
+    if (!url) return '';
+    const t = url.trim();
+    return t && !/^https?:\/\//i.test(t) ? 'https://' + t : t;
+  };
+
   const URL_FIELDS = ['linkedin_url', 'github_url', 'website_url', 'upwork_url'];
   const handleUrlBlur = (e) => {
     const { name, value } = e.target;
     if (!URL_FIELDS.includes(name)) return;
-    const trimmed = value.trim();
-    if (trimmed && !/^https?:\/\//i.test(trimmed)) {
-      setForm((prev) => ({ ...prev, [name]: 'https://' + trimmed }));
-    }
+    const val = addHttps(value);
+    if (val !== value.trim()) setForm((prev) => ({ ...prev, [name]: val }));
   };
 
   const handleSubmit = async (e) => {
@@ -191,7 +399,9 @@ export default function ProfilePage() {
     const result = profileSchema.safeParse(parsed);
     if (!result.success) {
       const errors = {};
-      result.error.issues.forEach((issue) => { errors[issue.path[0]] = issue.message; });
+      result.error.issues.forEach((issue) => {
+        errors[issue.path[0]] = issue.message;
+      });
       setFieldErrors(errors);
       return;
     }
@@ -201,15 +411,15 @@ export default function ProfilePage() {
       const updates = {
         name: parsed.name,
         profile: {
-          title:            parsed.title,
-          bio:              parsed.bio,
+          title: parsed.title,
+          bio: parsed.bio,
           skills,
           experience_years: parsed.experience_years,
-          upwork_url:       parsed.upwork_url,
-          location:         parsed.location,
-          linkedin_url:     parsed.linkedin_url,
-          github_url:       parsed.github_url,
-          website_url:      parsed.website_url,
+          upwork_url: parsed.upwork_url,
+          location: parsed.location,
+          linkedin_url: parsed.linkedin_url,
+          github_url: parsed.github_url,
+          website_url: parsed.website_url,
           languages,
           education,
           certifications,
@@ -229,6 +439,24 @@ export default function ProfilePage() {
   const handleCvUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // PDF-only validation
+    if (file.type !== 'application/pdf') {
+      dispatch(addNotification({ type: 'error', message: 'Only PDF files are supported. Please upload a PDF.' }));
+      if (cvInputRef.current) cvInputRef.current.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      dispatch(addNotification({ type: 'error', message: 'File is too large. Maximum size is 5 MB.' }));
+      if (cvInputRef.current) cvInputRef.current.value = '';
+      return;
+    }
+
+    // Create a local object URL for immediate preview
+    if (cvPreviewUrl) URL.revokeObjectURL(cvPreviewUrl);
+    const localUrl = URL.createObjectURL(file);
+    setCvPreviewUrl(localUrl);
+    setCvPreviewMime(file.type);
     setCvUploading(true);
     try {
       const res = await userApi.uploadCV(file);
@@ -237,42 +465,47 @@ export default function ProfilePage() {
       // Auto-fill form fields from extracted data (non-empty values only)
       setForm((prev) => ({
         ...prev,
-        name:             ext.name             || prev.name,
-        title:            ext.title            || prev.title,
-        bio:              ext.bio              || prev.bio,
-        experience_years: ext.experience_years != null && ext.experience_years > 0 ? String(ext.experience_years) : prev.experience_years,
-        location:         ext.location         || prev.location,
-        linkedin_url:     ext.linkedin_url     || prev.linkedin_url,
-        github_url:       ext.github_url       || prev.github_url,
-        website_url:      ext.website_url      || prev.website_url,
+        name: ext.name || prev.name,
+        title: ext.title || prev.title,
+        bio: ext.bio || prev.bio,
+        experience_years:
+          ext.experience_years != null && ext.experience_years > 0
+            ? String(ext.experience_years)
+            : prev.experience_years,
+        location: ext.location || prev.location,
+        linkedin_url: addHttps(ext.linkedin_url) || prev.linkedin_url,
+        github_url: addHttps(ext.github_url) || prev.github_url,
+        website_url: addHttps(ext.website_url) || prev.website_url,
       }));
-      if (ext.skills?.length)         setSkills(ext.skills);
-      if (ext.languages?.length)      setLanguages(ext.languages);
-      if (ext.education?.length)      setEducation(ext.education);
+      if (ext.skills?.length) setSkills(ext.skills);
+      if (ext.languages?.length) setLanguages(ext.languages);
+      if (ext.education?.length) setEducation(ext.education);
       if (ext.certifications?.length) setCertifications(ext.certifications);
 
       // Include extracted fields in the Redux store so the useEffect re-population
       // reflects the new CV data instead of overwriting the form with old values.
-      dispatch(updateUser({
-        ...user,
-        name: ext.name || user.name,
-        profile: {
-          ...user.profile,
-          cv_filename:    res.data?.filename || file.name,
-          cv_uploaded_at: new Date().toISOString(),
-          ...(ext.title            && { title:            ext.title }),
-          ...(ext.bio              && { bio:              ext.bio }),
-          ...(ext.skills?.length   && { skills:           ext.skills }),
-          ...(ext.experience_years && { experience_years: ext.experience_years }),
-          ...(ext.location         && { location:         ext.location }),
-          ...(ext.linkedin_url     && { linkedin_url:     ext.linkedin_url }),
-          ...(ext.github_url       && { github_url:       ext.github_url }),
-          ...(ext.website_url      && { website_url:      ext.website_url }),
-          ...(ext.languages?.length     && { languages:     ext.languages }),
-          ...(ext.education?.length     && { education:     ext.education }),
-          ...(ext.certifications?.length && { certifications: ext.certifications }),
-        },
-      }));
+      dispatch(
+        updateUser({
+          ...user,
+          name: ext.name || user.name,
+          profile: {
+            ...user.profile,
+            cv_filename: res.data?.filename || file.name,
+            cv_uploaded_at: new Date().toISOString(),
+            ...(ext.title && { title: ext.title }),
+            ...(ext.bio && { bio: ext.bio }),
+            ...(ext.skills?.length && { skills: ext.skills }),
+            ...(ext.experience_years && { experience_years: ext.experience_years }),
+            ...(ext.location && { location: ext.location }),
+            ...(ext.linkedin_url && { linkedin_url: addHttps(ext.linkedin_url) }),
+            ...(ext.github_url && { github_url: addHttps(ext.github_url) }),
+            ...(ext.website_url && { website_url: addHttps(ext.website_url) }),
+            ...(ext.languages?.length && { languages: ext.languages }),
+            ...(ext.education?.length && { education: ext.education }),
+            ...(ext.certifications?.length && { certifications: ext.certifications }),
+          },
+        }),
+      );
 
       // Show extract banner for 7 seconds
       setCvExtractBanner(true);
@@ -290,10 +523,23 @@ export default function ProfilePage() {
     setCvRemoving(true);
     try {
       await userApi.removeCV();
-      dispatch(updateUser({
-        ...user,
-        profile: { ...user.profile, cv_filename: '', cv_uploaded_at: null },
-      }));
+      if (cvPreviewUrl) {
+        URL.revokeObjectURL(cvPreviewUrl);
+        setCvPreviewUrl(null);
+        setCvPreviewMime(null);
+      }
+      dispatch(
+        updateUser({
+          ...user,
+          profile: {
+            ...user.profile,
+            cv_filename: '',
+            cv_uploaded_at: null,
+            cv_file: '',
+            cv_mimetype: '',
+          },
+        }),
+      );
       dispatch(addNotification({ type: 'success', message: 'CV removed.' }));
     } catch (err) {
       dispatch(addNotification({ type: 'error', message: err?.message || 'Failed to remove CV.' }));
@@ -316,19 +562,27 @@ export default function ProfilePage() {
 
       {/* Avatar / tier card */}
       <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
-        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${TIER_GRADIENT[tier]} flex items-center justify-center shrink-0 shadow-md`}>
+        <div
+          className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${TIER_GRADIENT[tier]} flex items-center justify-center shrink-0 shadow-md`}
+        >
           <span className="text-white font-black text-2xl">
             {user?.name?.charAt(0)?.toUpperCase() || 'U'}
           </span>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-slate-900 text-lg truncate leading-tight">{user?.name || 'User'}</p>
-          <p className="text-slate-500 text-sm truncate">{user?.profile?.title || user?.email || ''}</p>
+          <p className="font-bold text-slate-900 text-lg truncate leading-tight">
+            {user?.name || 'User'}
+          </p>
+          <p className="text-slate-500 text-sm truncate">
+            {user?.profile?.title || user?.email || ''}
+          </p>
           {user?.profile?.location && (
             <p className="text-slate-400 text-xs mt-0.5">{user.profile.location}</p>
           )}
         </div>
-        <span className={`shrink-0 text-xs font-bold px-3 py-1 rounded-full capitalize ${TIER_BADGE[tier]}`}>
+        <span
+          className={`shrink-0 text-xs font-bold px-3 py-1 rounded-full capitalize ${TIER_BADGE[tier]}`}
+        >
           {tier} plan
         </span>
       </div>
@@ -336,14 +590,34 @@ export default function ProfilePage() {
       {/* CV extract banner */}
       {cvExtractBanner && (
         <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-3">
-          <svg className="w-4 h-4 text-emerald-500 shrink-0" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+          <svg
+            className="w-4 h-4 text-emerald-500 shrink-0"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+              clipRule="evenodd"
+            />
           </svg>
           <p className="text-sm text-emerald-700 flex-1">
-            Profile fields updated from your CV. Review the form below and click <strong>Save changes</strong> when ready.
+            Profile fields updated from your CV. Review the form below and click{' '}
+            <strong>Save changes</strong> when ready.
           </p>
-          <button type="button" onClick={() => setCvExtractBanner(false)} className="text-emerald-400 hover:text-emerald-600">
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          <button
+            type="button"
+            onClick={() => setCvExtractBanner(false)}
+            className="text-emerald-400 hover:text-emerald-600"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
           </button>
         </div>
       )}
@@ -351,50 +625,102 @@ export default function ProfilePage() {
       {/* Save error */}
       {error && (
         <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-2xl p-4">
-          <svg className="h-4 w-4 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg
+            className="h-4 w-4 text-red-500 shrink-0"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
           <p className="text-sm text-red-700 flex-1">{error}</p>
-          <button type="button" onClick={() => setError(null)} className="text-red-400 hover:text-red-600">
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          <button
+            type="button"
+            onClick={() => setError(null)}
+            className="text-red-400 hover:text-red-600"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
           </button>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
-
         {/* ── CV / Resume (top — drives everything) ── */}
         <ProfileSection
           title="CV / Resume"
           gradient="from-sky-500 to-blue-600"
           icon={
-            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <svg
+              className="w-4 h-4 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
             </svg>
           }
         >
           <p className="text-xs text-slate-500 mb-4">
-            Upload your CV to auto-fill your profile and match LinkedIn jobs to your background.
-            Only extracted text is stored — your file is never saved on our servers.
-            Supports PDF and DOCX up to 5 MB.
+            Upload your CV (PDF only, up to 5 MB) to auto-fill your profile and match LinkedIn jobs to your background.
           </p>
 
           {user?.profile?.cv_filename ? (
             <div className="flex items-center gap-3 p-3 bg-sky-50 border border-sky-200 rounded-xl">
-              <svg className="w-5 h-5 text-sky-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-5 h-5 text-sky-500 shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-sky-800 truncate">{user.profile.cv_filename}</p>
+                <p className="text-xs font-semibold text-sky-800 truncate">
+                  {user.profile.cv_filename}
+                </p>
                 {user.profile.cv_uploaded_at && (
-                  <p className="text-xs text-sky-500">Uploaded {new Date(user.profile.cv_uploaded_at).toLocaleDateString()}</p>
+                  <p className="text-xs text-sky-500">
+                    Uploaded {new Date(user.profile.cv_uploaded_at).toLocaleDateString()}
+                  </p>
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <button type="button" onClick={() => cvInputRef.current?.click()} disabled={cvUploading} className="text-xs font-semibold text-sky-600 hover:text-sky-800 px-2 py-1 rounded-lg hover:bg-sky-100 transition-colors">
+                <button
+                  type="button"
+                  onClick={() => cvInputRef.current?.click()}
+                  disabled={cvUploading}
+                  className="text-xs font-semibold text-sky-600 hover:text-sky-800 px-2 py-1 rounded-lg hover:bg-sky-100 transition-colors"
+                >
                   {cvUploading ? 'Uploading…' : 'Replace'}
                 </button>
-                <button type="button" onClick={handleCvRemove} disabled={cvRemoving} className="text-xs font-semibold text-red-500 hover:text-red-700 px-2 py-1 rounded-lg hover:bg-red-50 transition-colors">
+                <button
+                  type="button"
+                  onClick={handleCvRemove}
+                  disabled={cvRemoving}
+                  className="text-xs font-semibold text-red-500 hover:text-red-700 px-2 py-1 rounded-lg hover:bg-red-50 transition-colors"
+                >
                   {cvRemoving ? 'Removing…' : 'Remove'}
                 </button>
               </div>
@@ -408,18 +734,43 @@ export default function ProfilePage() {
             >
               {cvUploading ? (
                 <>
-                  <svg className="animate-spin h-5 w-5 text-sky-500" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  <svg
+                    className="animate-spin h-5 w-5 text-sky-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
                   </svg>
                   <span className="text-xs font-medium text-sky-600">Parsing CV with AI…</span>
                 </>
               ) : (
                 <>
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                    />
                   </svg>
-                  <span className="text-xs font-medium">Click to upload PDF or DOCX</span>
+                  <span className="text-xs font-medium">Click to upload PDF</span>
                 </>
               )}
             </button>
@@ -428,10 +779,20 @@ export default function ProfilePage() {
           <input
             ref={cvInputRef}
             type="file"
-            accept=".pdf,.docx,.doc,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword"
+            accept=".pdf,application/pdf"
             onChange={handleCvUpload}
             className="hidden"
           />
+
+          {/* CV Preview — shows after upload or from stored Base64 */}
+          {(user?.profile?.cv_filename || cvPreviewUrl) && (
+            <CVPreview
+              cvFile={user?.profile?.cv_file}
+              cvFilename={user?.profile?.cv_filename}
+              cvText={user?.profile?.cv_text}
+              previewObjectUrl={cvPreviewUrl}
+            />
+          )}
         </ProfileSection>
 
         {/* ── Basic information ── */}
@@ -439,26 +800,65 @@ export default function ProfilePage() {
           title="Basic information"
           gradient="from-blue-500 to-indigo-600"
           icon={
-            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            <svg
+              className="w-4 h-4 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              />
             </svg>
           }
         >
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Full name" error={fieldErrors.name}>
-                <input id="name" name="name" type="text" value={form.name} onChange={handleChange} placeholder="Your full name" required className={inputCls(fieldErrors.name)} />
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  value={form.name}
+                  onChange={handleChange}
+                  placeholder="Your full name"
+                  required
+                  className={inputCls(fieldErrors.name)}
+                />
               </Field>
               <Field label="Professional title" error={fieldErrors.title}>
-                <input id="title" name="title" type="text" value={form.title} onChange={handleChange} placeholder="e.g. Senior Full Stack Developer" className={inputCls(fieldErrors.title)} />
+                <input
+                  id="title"
+                  name="title"
+                  type="text"
+                  value={form.title}
+                  onChange={handleChange}
+                  placeholder="e.g. Senior Full Stack Developer"
+                  className={inputCls(fieldErrors.title)}
+                />
               </Field>
             </div>
             <Field label="Location" error={fieldErrors.location}>
-              <input id="location" name="location" type="text" value={form.location} onChange={handleChange} placeholder="e.g. Cairo, Egypt" className={inputCls(fieldErrors.location)} />
+              <input
+                id="location"
+                name="location"
+                type="text"
+                value={form.location}
+                onChange={handleChange}
+                placeholder="e.g. Cairo, Egypt"
+                className={inputCls(fieldErrors.location)}
+              />
             </Field>
             <Field label={`Professional summary (${form.bio.length}/2000)`} error={fieldErrors.bio}>
               <textarea
-                id="bio" name="bio" rows={4} value={form.bio} onChange={handleChange}
+                id="bio"
+                name="bio"
+                rows={4}
+                value={form.bio}
+                onChange={handleChange}
                 placeholder="Briefly describe your expertise and what makes you stand out..."
                 className={`w-full px-3.5 py-2.5 text-sm border rounded-xl bg-slate-50 focus:bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none ${fieldErrors.bio ? 'border-red-400' : 'border-slate-200'}`}
                 maxLength={2000}
@@ -472,23 +872,58 @@ export default function ProfilePage() {
           title="Skills & Experience"
           gradient="from-emerald-500 to-teal-600"
           icon={
-            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            <svg
+              className="w-4 h-4 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+              />
             </svg>
           }
         >
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">Skills</label>
-              <TagInput tags={skills} onChange={setSkills} placeholder="Type a skill and press Enter" colorClass="bg-blue-500/10 text-blue-700" maxItems={20} />
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">
+                Skills
+              </label>
+              <TagInput
+                tags={skills}
+                onChange={setSkills}
+                placeholder="Type a skill and press Enter"
+                colorClass="bg-blue-500/10 text-blue-700"
+                maxItems={20}
+              />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Years of experience" error={fieldErrors.experience_years}>
-                <input id="experience_years" name="experience_years" type="number" min="0" max="50" value={form.experience_years} onChange={handleChange} placeholder="e.g. 5" className={inputCls(fieldErrors.experience_years)} />
+                <input
+                  id="experience_years"
+                  name="experience_years"
+                  type="number"
+                  min="0"
+                  max="50"
+                  value={form.experience_years}
+                  onChange={handleChange}
+                  placeholder="e.g. 5"
+                  className={inputCls(fieldErrors.experience_years)}
+                />
               </Field>
               <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">Languages</label>
-                <TagInput tags={languages} onChange={setLanguages} placeholder="e.g. English, Arabic…" colorClass="bg-emerald-500/10 text-emerald-700" />
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">
+                  Languages
+                </label>
+                <TagInput
+                  tags={languages}
+                  onChange={setLanguages}
+                  placeholder="e.g. English, Arabic…"
+                  colorClass="bg-emerald-500/10 text-emerald-700"
+                />
               </div>
             </div>
           </div>
@@ -499,25 +934,71 @@ export default function ProfilePage() {
           title="Online Presence"
           gradient="from-violet-500 to-purple-600"
           icon={
-            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            <svg
+              className="w-4 h-4 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+              />
             </svg>
           }
         >
           <div className="space-y-4">
             <Field label="LinkedIn URL" error={fieldErrors.linkedin_url}>
-              <input id="linkedin_url" name="linkedin_url" type="url" value={form.linkedin_url} onChange={handleChange} onBlur={handleUrlBlur} placeholder="https://linkedin.com/in/yourname" className={inputCls(fieldErrors.linkedin_url)} />
+              <input
+                id="linkedin_url"
+                name="linkedin_url"
+                type="url"
+                value={form.linkedin_url}
+                onChange={handleChange}
+                onBlur={handleUrlBlur}
+                placeholder="https://linkedin.com/in/yourname"
+                className={inputCls(fieldErrors.linkedin_url)}
+              />
             </Field>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="GitHub URL" error={fieldErrors.github_url}>
-                <input id="github_url" name="github_url" type="url" value={form.github_url} onChange={handleChange} onBlur={handleUrlBlur} placeholder="https://github.com/yourname" className={inputCls(fieldErrors.github_url)} />
+                <input
+                  id="github_url"
+                  name="github_url"
+                  type="url"
+                  value={form.github_url}
+                  onChange={handleChange}
+                  onBlur={handleUrlBlur}
+                  placeholder="https://github.com/yourname"
+                  className={inputCls(fieldErrors.github_url)}
+                />
               </Field>
               <Field label="Website / Portfolio" error={fieldErrors.website_url}>
-                <input id="website_url" name="website_url" type="url" value={form.website_url} onChange={handleChange} onBlur={handleUrlBlur} placeholder="https://yoursite.com" className={inputCls(fieldErrors.website_url)} />
+                <input
+                  id="website_url"
+                  name="website_url"
+                  type="url"
+                  value={form.website_url}
+                  onChange={handleChange}
+                  onBlur={handleUrlBlur}
+                  placeholder="https://yoursite.com"
+                  className={inputCls(fieldErrors.website_url)}
+                />
               </Field>
             </div>
             <Field label="Upwork profile URL" error={fieldErrors.upwork_url}>
-              <input id="upwork_url" name="upwork_url" type="url" value={form.upwork_url} onChange={handleChange} onBlur={handleUrlBlur} placeholder="https://www.upwork.com/freelancers/yourname" className={inputCls(fieldErrors.upwork_url)} />
+              <input
+                id="upwork_url"
+                name="upwork_url"
+                type="url"
+                value={form.upwork_url}
+                onChange={handleChange}
+                onBlur={handleUrlBlur}
+                placeholder="https://www.upwork.com/freelancers/yourname"
+                className={inputCls(fieldErrors.upwork_url)}
+              />
             </Field>
           </div>
         </ProfileSection>
@@ -527,22 +1008,47 @@ export default function ProfilePage() {
           title="Education & Certifications"
           gradient="from-amber-500 to-orange-500"
           icon={
-            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg
+              className="w-4 h-4 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"
+              />
             </svg>
           }
         >
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">
-                Education <span className="normal-case text-slate-400 font-normal tracking-normal">(e.g. "BSc CS, MIT, 2019")</span>
+                Education{' '}
+                <span className="normal-case text-slate-400 font-normal tracking-normal">
+                  (e.g. "BSc CS, MIT, 2019")
+                </span>
               </label>
-              <TagInput tags={education} onChange={setEducation} placeholder="Degree, Institution, Year…" colorClass="bg-violet-500/10 text-violet-700" />
+              <TagInput
+                tags={education}
+                onChange={setEducation}
+                placeholder="Degree, Institution, Year…"
+                colorClass="bg-violet-500/10 text-violet-700"
+              />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">Certifications</label>
-              <TagInput tags={certifications} onChange={setCertifications} placeholder="e.g. AWS Solutions Architect…" colorClass="bg-amber-500/10 text-amber-700" />
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">
+                Certifications
+              </label>
+              <TagInput
+                tags={certifications}
+                onChange={setCertifications}
+                placeholder="e.g. AWS Solutions Architect…"
+                colorClass="bg-amber-500/10 text-amber-700"
+              />
             </div>
           </div>
         </ProfileSection>
@@ -555,12 +1061,28 @@ export default function ProfilePage() {
           >
             {loading ? (
               <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                />
               </svg>
             ) : (
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
             )}
             {loading ? 'Saving…' : 'Save changes'}

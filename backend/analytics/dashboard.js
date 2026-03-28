@@ -13,7 +13,7 @@ async function handler(req, res) {
 
   const [allAnalyses, thisWeekAnalyses, total] = await Promise.all([
     Analysis.find({ user_id: userId })
-      .select('result.bid_score result.win_probability outcome created_at job.title job.platform result.bid_min result.bid_max')
+      .select('analysis_type result.bid_score result.win_probability result.bid_min result.bid_max match_result.match_score match_result.recommended_action outcome created_at job.title job.platform')
       .sort({ created_at: -1 })
       .limit(100)
       .lean(),
@@ -21,9 +21,13 @@ async function handler(req, res) {
     Analysis.countDocuments({ user_id: userId }),
   ]);
 
-  // Average bid score
+  // Average score across all analysis types
+  const getScore = (a) => a.analysis_type === 'job_match'
+    ? (a.match_result?.match_score || 0)
+    : (a.result?.bid_score || 0);
+
   const avg_bid_score = total > 0
-    ? Math.round(allAnalyses.reduce((sum, a) => sum + (a.result?.bid_score || 0), 0) / total)
+    ? Math.round(allAnalyses.reduce((sum, a) => sum + getScore(a), 0) / total)
     : 0;
 
   // Win rate: among analyses where user bid AND recorded a win/loss
@@ -37,7 +41,7 @@ async function handler(req, res) {
   const score_trend = allAnalyses
     .slice(0, 7)
     .reverse()
-    .map((a) => a.result?.bid_score || 0);
+    .map((a) => getScore(a));
 
   // Recent 5 analyses for the dashboard list
   const recent_analyses = allAnalyses.slice(0, 5);
