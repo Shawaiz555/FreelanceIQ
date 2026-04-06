@@ -614,8 +614,12 @@ $('match-reanalyse-btn').addEventListener('click', () => {
 
 // ─── Paste job description feature ────────────────────────────────────────────
 
+// Track where paste was opened from so back button returns correctly
+var _pasteOriginState = 'error';
+
 // Entry points → show paste form (auto-detect platform from page URL)
-function goToPaste() {
+function goToPaste(originState) {
+  _pasteOriginState = originState || 'error';
   const sel = $('paste-platform');
   const wrap = $('paste-platform-wrap');
   if (_detectedPlatform) {
@@ -627,11 +631,11 @@ function goToPaste() {
   }
   showState('paste');
 }
-$('paste-from-error-btn').addEventListener('click', goToPaste);
-$('paste-from-confirm-btn').addEventListener('click', goToPaste);
+$('paste-from-error-btn').addEventListener('click', () => goToPaste('error'));
+$('paste-from-confirm-btn').addEventListener('click', () => goToPaste('confirm'));
 
-// Back → return to error state (safe fallback)
-$('paste-back-btn').addEventListener('click', () => showState('error'));
+// Back → return to where we came from
+$('paste-back-btn').addEventListener('click', () => showState(_pasteOriginState));
 
 // Character counter + button enable/disable
 $('paste-desc').addEventListener('input', () => {
